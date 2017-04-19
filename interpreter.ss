@@ -17,6 +17,9 @@
            (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
 		          "variable not found in environment: ~s"
 			   id)))] 
+      [if-exp (condition true false)
+              (let ([cond-val (eval-exp condition)])
+                (if cond-val (eval-exp true) (eval-exp false)))]
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator)]
               [args (eval-rands rands)])
@@ -42,7 +45,7 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? not))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -56,17 +59,30 @@
 
 (define apply-prim-proc
   (lambda (prim-proc args)
-    (case prim-proc
-      [(+) (+ (1st args) (2nd args))]
-      [(-) (- (1st args) (2nd args))]
-      [(*) (* (1st args) (2nd args))]
-      [(add1) (+ (1st args) 1)]
-      [(sub1) (- (1st args) 1)]
-      [(cons) (cons (1st args) (2nd args))]
-      [(=) (= (1st args) (2nd args))]
-      [else (error 'apply-prim-proc 
-            "Bad primitive procedure name: ~s" 
-            prim-op)])))
+    (let ([arg-len (length args)])
+      (case prim-proc
+        [(+) (+ (1st args) (2nd args))]
+        [(-) (- (1st args) (2nd args))]
+        [(*) (* (1st args) (2nd args))]
+        [(add1) (+ (1st args) 1)]
+        [(sub1) (- (1st args) 1)]
+        [(cons) (cons (1st args) (2nd args))]
+        [(=) (= (1st args) (2nd args))]
+        [(/) (/ (1st args) (2nd args))]
+        [(zero?) (if (= 1 arg-len)
+                     (zero? (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-op)
+                     )]
+        [(not) (if (= 1 arg-len)
+                    (not (1st args))
+                    (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-op))]
+        [else (error 'apply-prim-proc 
+                     "Bad primitive procedure name: ~s" 
+                     prim-op)]))))
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()
