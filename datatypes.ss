@@ -22,10 +22,10 @@
 (define-datatype proc-val proc-val?
   [prim-proc
    (name symbol?)])
-	 
-	 
-	 
-	
+
+
+
+
 ;; environment type definitions
 
 (define scheme-value?
