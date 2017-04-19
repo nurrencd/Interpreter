@@ -14,17 +14,8 @@
      [(number? datum) (lit-exp datum)]
      [(pair? datum)
       (cond
-       
+       [(not (list? datum))
+        (eopl:error 'parse-exp "improper list structure ~s" datum)]
        [else (app-exp (parse-exp (1st datum))
 		      (map parse-exp (cdr datum)))])]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
-
-
-
-
-
-
-
-
-
-
