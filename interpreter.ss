@@ -114,7 +114,7 @@
                      (error 'apply-prim-proc
                             "cannot cdr empty list")
                    )]
-        [(list) (apply list args)]
+        [(list) args]
         [(null?) (if (= arg-len 1)
                      (null? (1st args))
                      (error 'apply-prim-proc
