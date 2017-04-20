@@ -46,12 +46,17 @@
                     proc-value)])))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
-                            not < > <= >=))
+                              not < > <= >= car cdr list null? assq eq equal atom?
+                              length list->vector list? pair? procedure? vector->list
+                              vector make-vector vector-ref vector? number? symbol?
+                              set-car! set-cdr! vector-set! display newline
+                              caar cadr cdar cddr
+                              caaar caadr cadar caddr cdaar cdadr cddar cdddr ))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
      *prim-proc-names*   ;  a value (not an expression) with an identifier.
-     (map prim-proc      
+     (map prim-proc
           *prim-proc-names*)
      (empty-env)))
 
@@ -137,8 +142,8 @@
                            "Incorrect argument count in call ~s"
                            prim-proc)
                       )]
-        [(list->vector) (if (= arg-len 2)
-                            (list->vector (1st args) (2nd args))
+        [(list->vector) (if (= arg-len 1)
+                            (list->vector (1st args))
                             (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
@@ -161,8 +166,8 @@
                            "Incorrect argument count in call ~s"
                            prim-proc)
                           )]
-        [(vector->list) (if (= arg-len 2)
-                            (vector->list (1st args) (2nd args))
+        [(vector->list) (if (= arg-len 1)
+                            (vector->list (1st args))
                             (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
@@ -182,12 +187,46 @@
                            "Incorrect argument count in call ~s"
                            prim-proc)
                           )]
-        
-        
-        
-        
-        
-        
+        [(vector?) (if (= arg-len 1)
+                       (vector? (1st args))
+                       (error 'apply-prim-proc
+                              "Incorrect argument count in call ~s"
+                              prim-proc))]
+        [(number?) (if (= arg-len 1)
+                        (number? (1st args))
+                        (error 'apply-prim-proc
+                               "Incorrect argument count in call ~s"
+                               prim-proc))]
+        [(symbol?) (if (= arg-len 1)
+                       (symbol? (1st args))
+                       (error 'apply-prim-proc
+                              "Incorrect argument count in call ~s"
+                              prim-proc))]
+        [(set-car!) (if (= arg-len 2)
+                        (set-car! (1st args) (2nd args))
+                        (error 'apply-prim-proc
+                               "Incorrect argument count in call ~s"
+                               prim-proc))]
+        [(set-cdr!) (if (= arg-len 2)
+                        (set-cdr! (1st args) (2nd args))
+                        (error 'apply-prim-proc
+                               "Incorrect argument count in call ~s"
+                               prim-proc))]
+        [(vector-set!) (if (= arg-len 3)
+                           (vector-set! (1st args) (2nd args) (3rd args))
+                           (error 'apply-prim-proc
+                                  "Incorrect argument count in call ~s"
+                                  prim-proc))]
+        [(display) (if (= arg-len 1)
+                       (display (1st args))
+                       (error 'apply-prim-proc
+                              "Incorrect argument count in call ~s"
+                              prim-proc))]
+        [(newline) (if (null? args)
+                       (newline)
+                       (error 'apply-prim-proc
+                              "Incorrect argument count in call ~s"
+                              prim-proc))]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-op)]))))
