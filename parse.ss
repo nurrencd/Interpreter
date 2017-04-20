@@ -144,40 +144,4 @@
            [app-exp (rator rand)
                     (cons (unparse-exp rator) (map unparse-exp rand))])))
 
-(define-datatype expression expression?
-  [var-exp
-   (id symbol?)]
-  [lit-exp
-   (id (lambda (n) (or number? boolean? string? char? symbol? list? vector?)))]
-  [lambda-exp
-   (id (list-of symbol?))
-   (list-id (lambda (n) (or null? symbol?)))
-   (body (list-of expression?))]
-  [let-exp
-   (id (list-of symbol?))
-   (value (list-of expression?))
-   (body (list-of expression?))]
-  [let*-exp
-   (id (list-of symbol?))
-   (value (list-of expression?))
-   (body (list-of expression?))]
-  [letrec-exp
-   (id (list-of symbol?))
-   (value (list-of expression?))
-   (body (list-of expression?))]
-  [named-let-exp
-   (id (list-of symbol?))
-   (value (list-of expression?))]
-  [if-exp
-   (condition expression?)
-   (true expression?)
-   (false expression?)]
-  [single-if-exp
-   (condition expression?)
-   (true expression?)]
-  [set!-exp
-   (id symbol?)
-   (rand expression?)]
-  [app-exp
-   (rator expression?)
-   (rand (list-of expression?))])
+
