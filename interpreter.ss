@@ -33,6 +33,8 @@
                                                            value)
                                                           env)))
                       body)))]
+      [lambda-exp (syms list-id body)
+               (closure syms list-id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -50,6 +52,15 @@
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
 			; You will add other cases
+      [closure (syms list-id proc env)
+                (if (null? list-id)
+                    (let ([new-env (extend-env syms args env)])
+                      (car (last-pair (map (lambda (x) (eval-exp x new-env)) proc))))
+                    (let* ([newer-args (new-args args (length syms))]
+                           [new-env (extend-env (append syms (list list-id))
+                                               newer-args
+                                               env)])
+                      (car (last-pair (map (lambda (x) (eval-exp x new-env)) proc)))))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -252,12 +263,8 @@
 (define eval-one-exp
   (lambda (x) (top-level-eval (parse-exp x))))
 
-
-
-
-
-
-
-
-
-
+(define new-args
+  (lambda (args n)
+    (if (zero? n)
+        (cons args '())
+        (cons (car args) (new-args (cdr args) (sub1 n))))))

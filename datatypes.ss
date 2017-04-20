@@ -8,7 +8,7 @@
    (id (lambda (n) (or number? boolean? string? char? symbol? list? vector?)))]
   [lambda-exp
    (id (list-of symbol?))
-   (list-id (lambda (n) (or null? symbol?)))
+   (list-id (lambda (n) (or (null? n) (symbol? n))))
    (body (list-of expression?))]
   [let-exp
    (id (list-of symbol?))
@@ -45,10 +45,13 @@
 
 (define-datatype proc-val proc-val?
   [prim-proc
-   (name symbol?)])
-
-
-
+   (name symbol?)]
+  [closure
+    (syms (list-of symbol?))
+    (list-id (lambda (x) (or (symbol? x) (null? x))))
+    (proc (list-of expression?))
+    (env environment?)])
+  
 
 ;; environment type definitions
 
