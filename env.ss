@@ -26,11 +26,11 @@
 (define apply-env
   (lambda (env sym succeed fail) ; succeed and fail are "callback procedures, 
     (cases environment env       ;  succeed is appluied if sym is found, otherwise 
-      [empty-env-record ()       ;  fail is applied.
-        (fail)]
-      [extended-env-record (syms vals env)
-		(let ((pos (list-find-position sym syms)))
-      	  (if 	(number? pos)
-				(succeed (list-ref vals pos))
-				(apply-env env sym succeed fail)))])))
+           [empty-env-record ()       ;  fail is applied.
+                             (fail)]
+           [extended-env-record (syms vals env)
+                                (let ((pos (list-find-position sym syms)))
+                                  (if (number? pos)
+                                      (succeed (list-ref vals pos))
+                                      (apply-env env sym succeed fail)))])))
 

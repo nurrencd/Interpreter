@@ -25,14 +25,15 @@
                      [args (eval-rands rands env)])
                  (apply-proc proc-value args))]
       [let-exp (id value body)
-               (car (last-pair
-                     (map
-                      (lambda (n) (eval-exp n (extend-env id
-                                                          (map
-                                                           (lambda (m) (eval-exp m env))
-                                                           value)
-                                                          env)))
-                      body)))]
+               (let ([new-env (extend-env id
+                                           (map
+                                            (lambda (m) (eval-exp m env))
+                                            value)
+                                           env)])
+                 (car (last-pair
+                       (map
+                        (lambda (n) (eval-exp n new-env))
+                        body))))]
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
@@ -114,8 +115,8 @@
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
-        [(car) (if (not (zero? arg-len))
-                   (car args)
+        [(car) (if (= 1 arg-len )
+                   (car (1st args))
                    (error 'apply-prim-proc
                           "Cannot car empty list")
                    )]
@@ -161,8 +162,8 @@
                            "Incorrect argument count in call ~s"
                            prim-proc)
                      )]
-        [(length) (if (not (zero? arg-len))
-                      (length args)
+        [(length) (if (= arg-len 1)
+                      (length (1st args))
                       (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
@@ -186,7 +187,7 @@
                            prim-proc)
                      )]
         [(procedure?) (if (= arg-len 1)
-                          (procedure? (1st args))
+                          (proc-val? (1st args))
                           (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
@@ -228,12 +229,12 @@
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(set-car!) (if (= arg-len 2)
-                        (set-car! (1st args) (2nd args))
+                        (apply set-car! args)
                         (error 'apply-prim-proc
                                "Incorrect argument count in call ~s"
                                prim-proc))]
         [(set-cdr!) (if (= arg-len 2)
-                        (set-cdr! (1st args) (2nd args))
+                        (apply set-cdr! args)
                         (error 'apply-prim-proc
                                "Incorrect argument count in call ~s"
                                prim-proc))]
