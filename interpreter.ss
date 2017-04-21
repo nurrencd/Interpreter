@@ -138,6 +138,12 @@
                            "Incorrect argument count in call ~s"
                            prim-proc)
                     )]
+        [(equal?) (if (= arg-len 2)
+                   (equal? (1st args) (2nd args))
+                   (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-proc)
+                   )][(equal?
         [(eq?) (if (= arg-len 2)
                    (eq? (1st args) (2nd args))
                    (error 'apply-prim-proc
@@ -249,7 +255,7 @@
                               prim-proc))]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
-                     prim-op)]))))
+                     prim-proc)]))))
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()
