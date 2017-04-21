@@ -119,8 +119,8 @@
                    (error 'apply-prim-proc
                           "Cannot car empty list")
                    )]
-        [(cdr) (if (not (zero? arg-len))
-                     (cdr args)
+        [(cdr) (if (= 1 arg-len)
+                     (cdr (1st args))
                      (error 'apply-prim-proc
                             "cannot cdr empty list")
                    )]
