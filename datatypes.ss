@@ -1,3 +1,14 @@
+;; environment type definitions
+
+(define scheme-value?
+  (lambda (x) #t))
+
+(define-datatype environment environment?
+  (empty-env-record)
+  (extended-env-record
+   (syms (list-of symbol?))
+   (vals (list-of scheme-value?))
+   (env environment?)))
 
 ;; Parsed expression datatypes
 
@@ -39,28 +50,14 @@
    (rator expression?)
    (rand (list-of expression?))])
 
-	
-; datatype for procedures.  At first there is only one
-; kind of procedure, but more kinds will be added later.
+;; datatype for procedures.  At first there is only one
+;; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
   [prim-proc
    (name symbol?)]
   [closure
-    (syms (list-of symbol?))
-    (list-id (lambda (x) (or (symbol? x) (null? x))))
-    (proc (list-of expression?))
-    (env environment?)])
-  
-
-;; environment type definitions
-
-(define scheme-value?
-  (lambda (x) #t))
-
-(define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
    (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
-   (env environment?)))
+   (list-id (lambda (x) (or (symbol? x) (null? x))))
+   (proc (list-of expression?))
+   (env environment?)])

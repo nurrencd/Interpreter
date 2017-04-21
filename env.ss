@@ -24,8 +24,8 @@
 		 #f))))))
 
 (define apply-env
-  (lambda (env sym succeed fail) ; succeed and fail are "callback procedures, 
-    (cases environment env       ;  succeed is appluied if sym is found, otherwise 
+  (lambda (env sym succeed fail) ; succeed and fail are "callback procedures,
+    (cases environment env       ;  succeed is appluied if sym is found, otherwise
            [empty-env-record ()       ;  fail is applied.
                              (fail)]
            [extended-env-record (syms vals env)

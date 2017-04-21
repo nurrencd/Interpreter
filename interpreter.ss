@@ -322,7 +322,6 @@
     (display "--> ")
     ;; notice that we don't save changes to the environment...
     (let ([answer (top-level-eval (parse-exp (read)))])
-      ;; TODO: are there answers that should display differently?
       (if (proc-val? answer)
           (display "<interpreter-procedure>")
           (eopl:pretty-print answer))
