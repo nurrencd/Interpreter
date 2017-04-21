@@ -66,7 +66,7 @@
                     proc-value)])))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
-                              not < > <= >= car cdr list null? assq eq equal atom?
+                              not < > <= >= car cdr list null? assq eq? equal? atom?
                               length list->vector list? pair? procedure? vector->list
                               vector make-vector vector-ref vector? number? symbol?
                               set-car! set-cdr! vector-set! display newline
@@ -82,7 +82,6 @@
 
 ; Usually an interpreter must define each 
 ; built-in procedure individually.  We are "cheating" a little bit.
-
 (define apply-prim-proc
   (lambda (prim-proc args)
     (let ([arg-len (length args)])
@@ -143,7 +142,7 @@
                    (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
-                   )][(equal?
+                   )]
         [(eq?) (if (= arg-len 2)
                    (eq? (1st args) (2nd args))
                    (error 'apply-prim-proc
@@ -253,6 +252,66 @@
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
+        [(caar) (if (= arg-len 1)
+                       (caar (1st args))
+                       (error 'apply-prim-proc
+                              "Incorrect argument count in call ~s"
+                              prim-proc))]
+        [(cadr) (if (= arg-len 1)
+                    (cadr (1st args))
+                    (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-proc))]
+        [(cdar) (if (= arg-len 1)
+                    (cdar (1st args))
+                    (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-proc))]
+        [(cddr) (if (= arg-len 1)
+                    (cddr (1st args))
+                    (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-proc))]
+        [(caaar) (if (= arg-len 1)
+                    (caaar (1st args))
+                    (error 'apply-prim-proc
+                           "Incorrect argument count in call ~s"
+                           prim-proc))]
+        [(caadr) (if (= arg-len 1)
+                     (caadr (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(cadar) (if (= arg-len 1)
+                     (cadar (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(caddr) (if (= arg-len 1)
+                     (caddr (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(cdaar) (if (= arg-len 1)
+                     (cdaar (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(cdadr) (if (= arg-len 1)
+                     (cdadr (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(cddar) (if (= arg-len 1)
+                     (cddar (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
+        [(cdddr) (if (= arg-len 1)
+                     (cdddr (1st args))
+                     (error 'apply-prim-proc
+                            "Incorrect argument count in call ~s"
+                            prim-proc))]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))
@@ -263,7 +322,10 @@
     ;; notice that we don't save changes to the environment...
     (let ([answer (top-level-eval (parse-exp (read)))])
       ;; TODO: are there answers that should display differently?
-      (eopl:pretty-print answer) (newline)
+      (if (proc-val? answer)
+          (display "<interpreter-procedure>")
+          (eopl:pretty-print answer))
+      (newline)
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
