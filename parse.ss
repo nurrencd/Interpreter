@@ -20,6 +20,14 @@
         (get-last (cdr n))
         (cdr n))))
 
+(define only-symbols?
+  (lambda (n)
+    (if (symbol? (car n))
+        (if (or (null? (cdr n)) (symbol? (cdr n)))
+            #t
+            (only-symbols? (cdr n)))
+        #f)))
+
 (define get-rest
   (lambda (n)
     (if (pair? (cdr n))
@@ -55,7 +63,7 @@
        [(lambda)
         (if (> 3 (length datum))
             (eopl:error 'parse-exp "lambda expression: incorrect length ~s" datum))
-        (if (not (or ((list-of symbol?) (2nd datum)) (symbol? (2nd datum))))
+        (if (not (or (symbol? (2nd datum)) (only-symbols? (2nd datum))))
             (eopl:error 'parse-exp "lambda expression: identifiers must be symbols ~s" datum))
         (cond
          [(list? (2nd datum))
