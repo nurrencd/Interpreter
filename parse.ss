@@ -40,6 +40,16 @@
         (cons (car n) to-add)
         (cons (car n) (cons-end (cdr n) to-add)))))
 
+(define cond-parser-helper
+  (lambda (exp conds execs)
+    (cond [(null? (cdr exp)) (list conds execs (cdar exp))]
+          [else (let ([first (caar exp)]
+                      [second (cdar exp)])
+                  (cond-parser-helper (cdr exp)
+                                      (append conds (list first))
+                                      (append execs (list second))))])))
+                  
+
 (define let-error-check
   (lambda (n)
     (cond
@@ -117,6 +127,14 @@
         (lit-exp (2nd datum))]
        [(and)
         (and-exp (map parse-exp (cdr datum)))]
+       [(or)
+        (or-exp (map parse-exp (cdr datum)))]
+       [(cond)
+        (let ([result (cond-parser-helper (cdr datum) '() '())])
+          (cond-exp (map parse-exp (car result)))
+                    (map parse-exp (cadr result))
+                    (map parse-exp (caddr result)))]
+                         
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]

@@ -50,7 +50,13 @@
    (rator expression?)
    (rand (list-of expression?))]
   [and-exp
-   (rand (list-of expression?))])
+   (rand (list-of expression?))]
+  [or-exp
+    (rand (list-of expression?))]
+  [cond-exp
+    (cond  (list-of expression?))
+    (execs (list-of (list-of expression?)))
+    (else  (list-of expression?))])
 
 ;; datatype for procedures.  At first there is only one
 ;; kind of procedure, but more kinds will be added later.
