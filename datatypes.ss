@@ -16,7 +16,8 @@
   [var-exp
    (id symbol?)]
   [lit-exp
-   (id (lambda (n) (or number? boolean? string? char? symbol? list? vector?)))]
+   (id (lambda (n)
+         (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector?))))]
   [lambda-exp
    (id (list-of symbol?))
    (list-id (lambda (n) (or (null? n) (symbol? n))))
@@ -58,7 +59,18 @@
   [cond-exp
     (cond  (list-of expression?))
     (execs (list-of (list-of expression?)))
-    (else  (list-of expression?))])
+    (else  (list-of expression?))]
+  [case-exp
+   (val (lambda (n)
+          (ormap (lambda (proc)
+                   (proc n))
+                 (list number? boolean? string? char? symbol? list? vector?))))
+   (cases (list-of (list-of (lambda (n)
+                              (ormap (lambda (proc)
+                                       (proc n))
+                                     (list number? boolean? string? char? symbol? list? vector?))))))
+   (execs (list-of (list-of expression?)))
+   (else-exp (list-of expression?))])
 
 ;; datatype for procedures.  At first there is only one
 ;; kind of procedure, but more kinds will be added later.

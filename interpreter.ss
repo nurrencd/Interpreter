@@ -1,9 +1,10 @@
+(define global-env init-env)
 ; top-level-eval evaluates a form in the global environment
 
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form init-env)))
+    (eval-exp form (empty-env))))
 
 ; eval-exp is the main component of the interpreter
 
@@ -13,10 +14,13 @@
       [lit-exp (datum) datum]
       [var-exp (id)
 				(apply-env env id; look up its value.
-      	   (lambda (x) x) ; procedure to call if id is in the environment 
-           (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-		          "variable not found in environment: ~s"
-			   id)))] 
+      	   (lambda (x) x) ; procedure to call if id is in the environment
+           (lambda () (apply-env global-env id
+                                 (lambda (x) x)
+                                 (lambda () (eopl:error
+                                             'apply-env
+                                             "variable not found in environment: ~s"
+                                             id)))))] 
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
@@ -111,11 +115,13 @@
            [cond-exp (conds execs else-exp)
                      (if (null? (cdr conds))
                          (syntax-expand (if-exp (car conds)
-                                                (car execs)
-                                                else-exp))
+                                                (begin-exp (car execs))
+                                                (begin-exp else-exp)))
                          (syntax-expand (if-exp (car conds)
-                                                (car execs)
-                                                (cond-exp (cdr conds) (cdr execs) else-exp))))])))
+                                                (begin-exp (car execs))
+                                                (cond-exp (cdr conds) (cdr execs) else-exp))))]
+           [case-exp (val cases execs else-exp)
+                     (syntax-expand (cond-exp (map parse-exp (map (lambda (n) (if (member val n) #t #f)) cases)) execs else-exp))])))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
                               not < > <= >= car cdr list null? assq eq? equal? atom?

@@ -72,7 +72,7 @@
        [(lambda)
         (if (> 3 (length datum))
             (eopl:error 'parse-exp "lambda expression: incorrect length ~s" datum))
-        (if (not (or (symbol? (2nd datum)) (only-symbols? (2nd datum))))
+        (if (not (or (null? (2nd datum)) (symbol? (2nd datum)) (only-symbols? (2nd datum))))
             (eopl:error 'parse-exp "lambda expression: identifiers must be symbols ~s" datum))
         (cond
          [(list? (2nd datum))
@@ -135,7 +135,12 @@
           (cond-exp (map parse-exp (car result))
                     (map (lambda (n) (map parse-exp n)) (cadr result))
                     (map parse-exp (caddr result))))]
-
+       [(case)
+        (let ([result (cond-parser-helper (cddr datum) '() '())])
+          (case-exp (2nd datum)
+                    (car result)
+                    (map (lambda (n) (map parse-exp n)) (cadr result))
+                    (map parse-exp (caddr result))))]
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
