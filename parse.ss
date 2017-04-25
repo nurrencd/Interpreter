@@ -48,7 +48,6 @@
                   (cond-parser-helper (cdr exp)
                                       (append conds (list first))
                                       (append execs (list second))))])))
-                  
 
 (define let-error-check
   (lambda (n)
@@ -129,12 +128,14 @@
         (and-exp (map parse-exp (cdr datum)))]
        [(or)
         (or-exp (map parse-exp (cdr datum)))]
+       [(begin)
+        (begin-exp (map parse-exp (cdr datum)))]
        [(cond)
         (let ([result (cond-parser-helper (cdr datum) '() '())])
-          (cond-exp (map parse-exp (car result)))
-                    (map parse-exp (cadr result))
-                    (map parse-exp (caddr result)))]
-                         
+          (cond-exp (map parse-exp (car result))
+                    (map (lambda (n) (map parse-exp n)) (cadr result))
+                    (map parse-exp (caddr result))))]
+
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
@@ -172,6 +173,10 @@
            [app-exp (rator rand)
                     (cons (unparse-exp rator) (map unparse-exp rand))]
            [and-exp (rand)
-                    (cons 'and (map unparse-exp rand))])))
-
-
+                    (cons 'and (map unparse-exp rand))]
+           [or-exp (rand)
+                   (cons 'and (map unparse-exp rand))]
+           [begin-exp (execs)
+                      (cons 'begin (map unparse-exp execs))]
+           [cond-exp (conds execs else)
+                     (append (list 'cond) (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs) (list (cons 'else (map unparse-exp else))))])))

@@ -53,6 +53,8 @@
    (rand (list-of expression?))]
   [or-exp
     (rand (list-of expression?))]
+  [begin-exp
+   (execs (list-of expression?))]
   [cond-exp
     (cond  (list-of expression?))
     (execs (list-of (list-of expression?)))

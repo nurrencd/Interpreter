@@ -77,7 +77,7 @@
            [lit-exp (id)
             exp]
            [lambda-exp (id list-id body)
-                       (lambda-exp id list-id (syntax-exp body))]
+                       (lambda-exp id list-id (map syntax-exp body))]
            [let-exp (id val body)
              (app-exp (lambda-exp id '() (map syntax-expand body)) (map syntax-expand val))]
            [let*-exp (id val body)
@@ -90,6 +90,10 @@
                     (if (null? (cdr rand))
                         (syntax-expand (car rand))
                         (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f))))]
+           [or-exp (rand)
+                   (if (null? (cdr rand))
+                       (syntax-expand (car rand))
+                       (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand)))))]
            [letrec-exp (id val body)
                        exp]
            [named-let-exp (id val)
@@ -101,7 +105,17 @@
            [set!-exp (id rand)
                      (set!-exp id (syntax-exp rand))]
            [app-exp (rator rand)
-                    (app-exp (syntax-expand rator) (map syntax-expand rand))])))
+                    (app-exp (syntax-expand rator) (map syntax-expand rand))]
+           [begin-exp (execs)
+                      (app-exp (lambda-exp '() '() (map syntax-expand execs)) '())]
+           [cond-exp (conds execs else-exp)
+                     (if (null? (cdr conds))
+                         (syntax-expand (if-exp (car conds)
+                                                (car execs)
+                                                else-exp))
+                         (syntax-expand (if-exp (car conds)
+                                                (car execs)
+                                                (cond-exp (cdr conds) (cdr execs) else-exp))))])))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
                               not < > <= >= car cdr list null? assq eq? equal? atom?
@@ -109,7 +123,8 @@
                               vector make-vector vector-ref vector? number? symbol?
                               set-car! set-cdr! vector-set! display newline
                               caar cadr cdar cddr
-                              caaar caadr cadar caddr cdaar cdadr cddar cdddr ))
+                              caaar caadr cadar caddr cdaar cdadr cddar cdddr
+                              map apply))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -350,6 +365,8 @@
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
+        [(map) (apply map (cons (lambda n (apply-proc (1st args) n)) (cdr args)))]
+        [(apply) (apply-proc (1st args) (cadr args))]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))
