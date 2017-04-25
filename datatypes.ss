@@ -17,7 +17,7 @@
    (id symbol?)]
   [lit-exp
    (id (lambda (n)
-         (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector?))))]
+         (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector? expression?))))]
   [lambda-exp
    (id (list-of symbol?))
    (list-id (lambda (n) (or (null? n) (symbol? n))))
@@ -61,14 +61,8 @@
     (execs (list-of (list-of expression?)))
     (else  (list-of expression?))]
   [case-exp
-   (val (lambda (n)
-          (ormap (lambda (proc)
-                   (proc n))
-                 (list number? boolean? string? char? symbol? list? vector?))))
-   (cases (list-of (list-of (lambda (n)
-                              (ormap (lambda (proc)
-                                       (proc n))
-                                     (list number? boolean? string? char? symbol? list? vector?))))))
+   (val expression?)
+   (cases (list-of (list-of expression?)))
    (execs (list-of (list-of expression?)))
    (else-exp (list-of expression?))])
 

@@ -140,8 +140,8 @@
                     (map parse-exp (caddr result))))]
        [(case)
         (let ([result (cond-parser-helper (cddr datum) '() '())])
-          (case-exp (2nd datum)
-                    (car result)
+          (case-exp (parse-exp (2nd datum))
+                    (map (lambda (n) (map parse-exp n)) (car result))
                     (map (lambda (n) (map parse-exp n)) (cadr result))
                     (map parse-exp (caddr result))))]
        [else (app-exp (parse-exp (1st datum))
@@ -187,4 +187,9 @@
            [begin-exp (execs)
                       (cons 'begin (map unparse-exp execs))]
            [cond-exp (conds execs else)
-                     (append (list 'cond) (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs) (list (cons 'else (map unparse-exp else))))])))
+                     (append (list 'cond) (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs) (list (cons 'else (map unparse-exp else))))]
+           [case-exp (val cases execs else-exp)
+                     (append (list 'case (unparse-exp val))
+                             (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs)
+                             (list (cons 'else (map unparse-exp else-exp))))])))
+

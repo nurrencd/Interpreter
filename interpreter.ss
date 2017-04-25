@@ -104,7 +104,7 @@
                         (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f))))]
            [or-exp (rand)
                    (cond
-                    [(null? rand) #f]
+                    [(null? rand) (lit-exp #f)]
                     [(null? (cdr rand))
                      (syntax-expand (car rand))]
                     [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
@@ -124,6 +124,7 @@
                       (app-exp (lambda-exp '() '() (map syntax-expand execs)) '())]
            [cond-exp (conds execs else-exp)
                      (cond
+                      [(null? conds) (syntax-expand (begin-exp else-exp))]
                       [(and (null? (cdr conds)) (null? else-exp))
                        (syntax-expand (single-if-exp (car conds)
                                                      (begin-exp (car execs))))]
@@ -137,11 +138,14 @@
                                               (cond-exp (cdr conds) (cdr execs) else-exp)))])]
            [case-exp (val cases execs else-exp)
                      (syntax-expand
-                      (cond-exp cases ; Needs to be fixed
-                                execs
-                                else-exp))])))
+                      (cond-exp
+                       (map (lambda (n) (app-exp (var-exp 'member)
+                                                 (list val (lit-exp (map unparse-exp n)))))
+                            cases)
+                       execs
+                       else-exp))])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
+(define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?
                               not < > <= >= car cdr list null? assq eq? equal? atom?
                               length list->vector list? pair? procedure? vector->list
                               vector make-vector vector-ref vector? number? symbol?
