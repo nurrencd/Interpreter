@@ -20,6 +20,9 @@
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
+      [single-if-exp (condition true)
+                     (let ([cond-val (eval-exp condition env)])
+                       (if cond-val (eval-exp true env)))]
       [app-exp (rator rands)
                (let ([proc-value (eval-exp rator env)]
                      [args (eval-rands rands env)])
