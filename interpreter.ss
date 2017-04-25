@@ -77,7 +77,7 @@
            [lit-exp (id)
             exp]
            [lambda-exp (id list-id body)
-                       (lambda-exp id list-id (map syntax-exp body))]
+                       (lambda-exp id list-id (map syntax-expand body))]
            [let-exp (id val body)
              (app-exp (lambda-exp id '() (map syntax-expand body)) (map syntax-expand val))]
            [let*-exp (id val body)
@@ -101,9 +101,9 @@
            [if-exp (condition true false)
                    (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
            [single-if-exp (condition true)
-                          (single-if-exp (syntax-expand condition) (syntax-exp true))]
+                          (single-if-exp (syntax-expand condition) (syntax-expand true))]
            [set!-exp (id rand)
-                     (set!-exp id (syntax-exp rand))]
+                     (set!-exp id (syntax-expand rand))]
            [app-exp (rator rand)
                     (app-exp (syntax-expand rator) (map syntax-expand rand))]
            [begin-exp (execs)
