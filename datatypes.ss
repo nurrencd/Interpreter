@@ -17,7 +17,7 @@
    (id symbol?)]
   [lit-exp
    (id (lambda (n)
-         (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector? expression?))))]
+         (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector?))))]
   [lambda-exp
    (id (list-of symbol?))
    (list-id (lambda (n) (or (null? n) (symbol? n))))
