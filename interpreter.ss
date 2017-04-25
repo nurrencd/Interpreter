@@ -1,19 +1,18 @@
-(define global-env init-env)
-; top-level-eval evaluates a form in the global environment
+;; top-level-eval evaluates a form in the global environment
 
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
     (eval-exp form (empty-env))))
 
-; eval-exp is the main component of the interpreter
+;; eval-exp is the main component of the interpreter
 
 (define eval-exp
   (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env env id; look up its value.
+				(apply-env env id ; look up its value.
       	   (lambda (x) x) ; procedure to call if id is in the environment
            (lambda () (apply-env global-env id
                                  (lambda (x) x)
@@ -31,29 +30,38 @@
                (let ([proc-value (eval-exp rator env)]
                      [args (eval-rands rands env)])
                  (apply-proc proc-value args))]
-      [let-exp (id value body)
-               (let ([new-env (extend-env id
-                                           (map
-                                            (lambda (m) (eval-exp m env))
-                                            value)
-                                           env)])
-                 (car (last-pair
-                       (map
-                        (lambda (n) (eval-exp n new-env))
-                        body))))]
+;;     [let-exp (id value body)
+;;              (let ([new-env (extend-env id
+;;                                          (map
+;;                                           (lambda (m) (eval-exp m env))
+;;                                           value)
+;;                                          env)])
+;;                (car (last-pair
+;;                      (map
+;;                       (lambda (n) (eval-exp n new-env))
+;;                       body))))]
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
-; evaluate the list of operands, putting results into a list
+;; evaluate the list of operands, putting results into a list
 
 (define eval-rands
   (lambda (rands env)
     (map (lambda (n) (eval-exp n env)) rands)))
 
-;  Apply a procedure to its arguments.
-;  At this point, we only have primitive procedures.  
-;  User-defined procedures will be added later.
+;; Executes the items in procs with the environment env. Meant for use in the body of a lambda
+
+(define apply-to-bodies
+  (lambda (env procs)
+    (if (null? (cdr procs))
+        (eval-exp (car procs) env)
+        (begin (eval-exp (car procs) env)
+               (apply-to-bodies env (cdr procs))))))
+
+;; Apply a procedure to its arguments.
+;; At this point, we only have primitive procedures.  
+;; User-defined procedures will be added later.
 
 (define apply-proc
   (lambda (proc-value args)
@@ -63,12 +71,12 @@
       [closure (syms list-id proc env)
                 (if (null? list-id)
                     (let ([new-env (extend-env syms args env)])
-                      (car (last-pair (map (lambda (x) (eval-exp x new-env)) proc))))
+                      (apply-to-bodies new-env proc))
                     (let* ([newer-args (new-args args (length syms))]
                            [new-env (extend-env (append syms (list list-id))
                                                newer-args
                                                env)])
-                      (car (last-pair (map (lambda (x) (eval-exp x new-env)) proc)))))]
+                      (apply-to-bodies new-env proc)))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -95,9 +103,11 @@
                         (syntax-expand (car rand))
                         (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f))))]
            [or-exp (rand)
-                   (if (null? (cdr rand))
-                       (syntax-expand (car rand))
-                       (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand)))))]
+                   (cond
+                    [(null? rand) #f]
+                    [(null? (cdr rand))
+                     (syntax-expand (car rand))]
+                    [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
            [letrec-exp (id val body)
                        exp]
            [named-let-exp (id val)
@@ -113,15 +123,23 @@
            [begin-exp (execs)
                       (app-exp (lambda-exp '() '() (map syntax-expand execs)) '())]
            [cond-exp (conds execs else-exp)
-                     (if (null? (cdr conds))
-                         (syntax-expand (if-exp (car conds)
-                                                (begin-exp (car execs))
-                                                (begin-exp else-exp)))
-                         (syntax-expand (if-exp (car conds)
-                                                (begin-exp (car execs))
-                                                (cond-exp (cdr conds) (cdr execs) else-exp))))]
+                     (cond
+                      [(and (null? (cdr conds)) (null? else-exp))
+                       (syntax-expand (single-if-exp (car conds)
+                                                     (begin-exp (car execs))))]
+                      [(null? (cdr conds))
+                       (syntax-expand (if-exp (car conds)
+                                              (begin-exp (car execs))
+                                              (begin-exp else-exp)))]
+                      [else
+                       (syntax-expand (if-exp (car conds)
+                                              (begin-exp (car execs))
+                                              (cond-exp (cdr conds) (cdr execs) else-exp)))])]
            [case-exp (val cases execs else-exp)
-                     (syntax-expand (cond-exp (map parse-exp (map (lambda (n) (if (member val n) #t #f)) cases)) execs else-exp))])))
+                     (syntax-expand
+                      (cond-exp cases ; Needs to be fixed
+                                execs
+                                else-exp))])))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
                               not < > <= >= car cdr list null? assq eq? equal? atom?
@@ -130,17 +148,19 @@
                               set-car! set-cdr! vector-set! display newline
                               caar cadr cdar cddr
                               caaar caadr cadar caddr cdaar cdadr cddar cdddr
-                              map apply))
+                              map apply member))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
-     *prim-proc-names*   ;  a value (not an expression) with an identifier.
+   *prim-proc-names*     ; a value (not an expression) with an identifier.
      (map prim-proc
           *prim-proc-names*)
      (empty-env)))
 
-; Usually an interpreter must define each 
-; built-in procedure individually.  We are "cheating" a little bit.
+(define global-env init-env)
+
+;; Usually an interpreter must define each 
+;; built-in procedure individually.  We are "cheating" a little bit.
 (define apply-prim-proc
   (lambda (prim-proc args)
     (let ([arg-len (length args)])
@@ -373,20 +393,21 @@
                             prim-proc))]
         [(map) (apply map (cons (lambda n (apply-proc (1st args) n)) (cdr args)))]
         [(apply) (apply-proc (1st args) (cadr args))]
+        [(member) (apply member args)]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))
 
-(define rep      ; "read-eval-print" loop.
+(define rep      ;"read-eval-print" loop.
   (lambda ()
     (display "--> ")
-    ;; notice that we don't save changes to the environment...
+    ;;;notice that we don't save changes to the environment...
     (let ([answer (top-level-eval (parse-exp (read)))])
       (if (proc-val? answer)
           (display "<interpreter-procedure>")
           (eopl:pretty-print answer))
       (newline)
-      (rep))))  ; tail-recursive, so stack doesn't grow.
+      (rep))))  ;tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
   (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))

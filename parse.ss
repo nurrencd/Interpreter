@@ -42,7 +42,10 @@
 
 (define cond-parser-helper
   (lambda (exp conds execs)
-    (cond [(null? (cdr exp)) (list conds execs (cdar exp))]
+    (cond [(and (null? (cdr exp)) (equal? 'else (caar exp))) (list conds execs (cdar exp))]
+          [(null? (cdr exp)) (list (append conds (list (caar exp)))
+                                   (append execs (list (cdar exp)))
+                                   '())]
           [else (let ([first (caar exp)]
                       [second (cdar exp)])
                   (cond-parser-helper (cdr exp)
