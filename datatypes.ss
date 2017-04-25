@@ -48,6 +48,8 @@
    (rand expression?)]
   [app-exp
    (rator expression?)
+   (rand (list-of expression?))]
+  [and-exp
    (rand (list-of expression?))])
 
 ;; datatype for procedures.  At first there is only one

@@ -115,6 +115,8 @@
         (if (not (equal? (length datum) 2))
             (eopl:error 'parse-exp "quote expression: incorrect length ~s" datum))
         (lit-exp (2nd datum))]
+       [(and)
+        (and-exp (map parse-exp (cdr datum)))]
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
@@ -150,6 +152,8 @@
            [set!-exp (id rand)
                      (list 'set id (unparse-exp rand))]
            [app-exp (rator rand)
-                    (cons (unparse-exp rator) (map unparse-exp rand))])))
+                    (cons (unparse-exp rator) (map unparse-exp rand))]
+           [and-exp (rand)
+                    (cons 'and (map unparse-exp rand))])))
 
 

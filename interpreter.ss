@@ -69,6 +69,40 @@
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
+(define syntax-expand
+  (lambda (exp)
+    (cases expression exp
+           [var-exp (id)
+                    exp]
+           [lit-exp (id)
+            exp]
+           [lambda-exp (id list-id body)
+                       (lambda-exp id list-id (syntax-exp body))]
+           [let-exp (id val body)
+             (app-exp (lambda-exp id '() (map syntax-expand body)) (map syntax-expand val))]
+           [let*-exp (id val body)
+                     (if (null? (cdr id))
+                         (syntax-expand (let-exp (list (car id)) (list (car val)) body))
+                         (syntax-expand (let-exp (list (car id))
+                                                 (list (car val))
+                                                 (list (let*-exp (cdr id) (cdr val) body)))))]
+           [and-exp (rand)
+                    (if (null? (cdr rand))
+                        (syntax-expand (car rand))
+                        (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f))))]
+           [letrec-exp (id val body)
+                       exp]
+           [named-let-exp (id val)
+                          exp]
+           [if-exp (condition true false)
+                   (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
+           [single-if-exp (condition true)
+                          (single-if-exp (syntax-expand condition) (syntax-exp true))]
+           [set!-exp (id rand)
+                     (set!-exp id (syntax-exp rand))]
+           [app-exp (rator rand)
+                    (app-exp (syntax-expand rator) (map syntax-expand rand))])))
+
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero? 
                               not < > <= >= car cdr list null? assq eq? equal? atom?
                               length list->vector list? pair? procedure? vector->list
@@ -332,7 +366,7 @@
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (parse-exp x))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
 (define new-args
   (lambda (args n)
