@@ -42,6 +42,10 @@
 ;;                       body))))]
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
+      [while-exp (test body)
+        (if (eval-exp test env)
+            (begin (apply-to-bodies env body)
+                   (eval-exp exp env)))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -143,7 +147,11 @@
                                                  (list val (lit-exp (map unparse-exp n)))))
                             cases)
                        execs
-                       else-exp))])))
+                       else-exp))]
+           [while-exp (test body)
+             (while-exp (syntax-expand test) (map syntax-expand body))]
+      
+      )))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?
                               not < > <= >= car cdr list null? assq eq? equal? atom?
@@ -152,7 +160,7 @@
                               set-car! set-cdr! vector-set! display newline
                               caar cadr cdar cddr
                               caaar caadr cadar caddr cdaar cdadr cddar cdddr
-                              map apply member))
+                              map apply member quotient))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -398,6 +406,7 @@
         [(map) (apply map (cons (lambda n (apply-proc (1st args) n)) (cdr args)))]
         [(apply) (apply-proc (1st args) (cadr args))]
         [(member) (apply member args)]
+        [(quotient) (apply quotient args)]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))

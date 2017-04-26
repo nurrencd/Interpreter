@@ -144,6 +144,8 @@
                     (map (lambda (n) (map parse-exp n)) (car result))
                     (map (lambda (n) (map parse-exp n)) (cadr result))
                     (map parse-exp (caddr result))))]
+       [(while)
+        (while-exp (parse-exp (2nd datum)) (map parse-exp (cddr datum)))]
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
@@ -191,5 +193,7 @@
            [case-exp (val cases execs else-exp)
                      (append (list 'case (unparse-exp val))
                              (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs)
-                             (list (cons 'else (map unparse-exp else-exp))))])))
+                             (list (cons 'else (map unparse-exp else-exp))))]
+           [while-exp (test body)
+                      (cons 'while (cons (unparse-exp test) (map unparse-exp body)))])))
 

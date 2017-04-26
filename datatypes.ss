@@ -64,7 +64,10 @@
    (val expression?)
    (cases (list-of (list-of expression?)))
    (execs (list-of (list-of expression?)))
-   (else-exp (list-of expression?))])
+   (else-exp (list-of expression?))]
+  [while-exp
+    (test expression?)
+    (body (list-of expression?))])
 
 ;; datatype for procedures.  At first there is only one
 ;; kind of procedure, but more kinds will be added later.
