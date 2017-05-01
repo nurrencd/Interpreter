@@ -99,7 +99,7 @@
                             (map parse-exp (cddr datum))))
             (named-let-exp (cons (2nd datum) (map 1st (3rd datum)))
                            (map get-let-val (3rd datum))
-                           (parse-exp (4th datum))))]
+                           (map parse-exp (cddr datum))))]
        [(let*)
         (let-error-check datum)
         (let*-exp (map 1st (2nd datum))

@@ -156,8 +156,8 @@
            [named-let-exp (id value body)
                           (syntax-expand
                            (letrec-exp (list (1st id))
-                                       (list (lambda-exp (cdr id) body)
-                                       (app-exp (1st id) values))))]
+                                       (list (lambda-exp (cdr id) '() body))
+                                       (list (app-exp (var-exp (1st id)) value))))]
       )))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?
