@@ -113,7 +113,7 @@
                      (syntax-expand (car rand))]
                     [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
            [letrec-exp (id val body)
-                       exp]
+                       (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
            [if-exp (condition true false)
                    (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
            [single-if-exp (condition true)
