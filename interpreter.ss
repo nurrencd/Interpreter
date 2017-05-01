@@ -167,7 +167,8 @@
                               set-car! set-cdr! vector-set! display newline
                               caar cadr cdar cddr
                               caaar caadr cadar caddr cdaar cdadr cddar cdddr
-                              map apply member quotient))
+                              map apply member quotient
+                              list-tail eqv? append))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -414,6 +415,9 @@
         [(apply) (apply-proc (1st args) (cadr args))]
         [(member) (apply member args)]
         [(quotient) (apply quotient args)]
+        [(list-tail) (apply list-tail args)]
+        [(eqv?) (apply eqv? args)]
+        [(append) (apply append args)]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))
