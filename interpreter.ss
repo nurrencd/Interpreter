@@ -114,8 +114,6 @@
                     [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
            [letrec-exp (id val body)
                        exp]
-           [named-let-exp (id val)
-                          exp]
            [if-exp (condition true false)
                    (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
            [single-if-exp (condition true)
@@ -149,8 +147,12 @@
                        execs
                        else-exp))]
            [while-exp (test body)
-             (while-exp (syntax-expand test) (map syntax-expand body))]
-      
+                      (while-exp (syntax-expand test) (map syntax-expand body))]
+           [named-let-exp (id value body)
+                          (syntax-expand
+                           (letrec-exp (list (1st id))
+                                       (list (lambda-exp (cdr id) body)
+                                       (app-exp (1st id) values))))]
       )))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?

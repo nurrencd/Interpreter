@@ -98,7 +98,8 @@
                             (map get-let-val (2nd datum))
                             (map parse-exp (cddr datum))))
             (named-let-exp (cons (2nd datum) (map 1st (3rd datum)))
-                           (cons (parse-exp (4th datum)) (map get-let-val (3rd datum)))))]
+                           (map get-let-val (3rd datum))
+                           (parse-exp (4th datum))))]
        [(let*)
         (let-error-check datum)
         (let*-exp (map 1st (2nd datum))
@@ -117,7 +118,7 @@
                            (parse-exp (3rd datum)))
             (if-exp (parse-exp (2nd datum))
                     (parse-exp (3rd datum))
-                    (parse-exp (4th datum))))]
+                    (map parse-exp (cdddr datum))))]
        [(set!)
         (if (not (equal? (length datum) 3))
             (eopl:error 'parse-exp "set! expression: incorrect length ~s" datum))
@@ -172,8 +173,8 @@
            [named-let-exp (id value)
                           (list 'let
                                 (1st id)
-                                (map list (cdr id) (map unparse-exp (cdr value)))
-                                (unparse-exp (1st value)))]
+                                (map list (cdr id) (map unparse-exp value))
+                                (map unparse-exp body))]
            [if-exp (condition true false)
                    (list 'if (unparse-exp condition) (unparse-exp true) (unparse-exp false))]
            [single-if-exp (condition true)
