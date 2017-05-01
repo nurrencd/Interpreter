@@ -118,7 +118,7 @@
                            (parse-exp (3rd datum)))
             (if-exp (parse-exp (2nd datum))
                     (parse-exp (3rd datum))
-                    (map parse-exp (cdddr datum))))]
+                    (parse-exp (4th datum))))]
        [(set!)
         (if (not (equal? (length datum) 3))
             (eopl:error 'parse-exp "set! expression: incorrect length ~s" datum))

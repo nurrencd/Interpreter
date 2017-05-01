@@ -40,6 +40,11 @@
 ;;                      (map
 ;;                       (lambda (n) (eval-exp n new-env))
 ;;                       body))))]
+      [letrec-exp (id vals body)
+        (let ([new-env (recursively-extended-env-record
+                         id vals env)])
+          (apply-to-bodies new-env body))]
+        
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
       [while-exp (test body)

@@ -11,8 +11,7 @@
    (env environment?))
   (recursively-extended-env-record
    (proc-names (list-of symbol?))
-   (idss (list-of (list-of symbol?)))
-   (bodiess (list-of (list-of expression?)))
+   (bodiess (list-of expression?))
    (env environment?)))
 
 ;; Parsed expression datatypes

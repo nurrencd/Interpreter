@@ -36,7 +36,8 @@
            [recursively-extended-env-record (proc-names bodiess old-env)
              (let ([pos (list-find-position sym proc-names)])
                (if (number? pos)
-                   (cases expression (list-ref bodies pos)
+                   (cases expression (list-ref bodiess pos)
                      [lambda-exp (id list-id bodies)
-                       (succeed (closure id list-id bodies env))])
+                       (succeed (closure id list-id bodies env))]
+                     [else (void)])
                    (apply-env old-env sym succeed fail)))])))
