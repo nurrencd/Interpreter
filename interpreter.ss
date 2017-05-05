@@ -51,6 +51,15 @@
         (if (eval-exp test env)
             (begin (apply-to-bodies env body)
                    (eval-exp exp env)))]
+      [for-exp (init condition update body)
+               (begin
+                 (apply-to-bodies env init)
+                 (let loop ()
+                   (if (eval-exp condition env)
+                       (begin
+                         (apply-to-bodies env body)
+                         (apply-to-bodies env update)
+                         (loop)))))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -63,10 +72,12 @@
 
 (define apply-to-bodies
   (lambda (env procs)
-    (if (null? (cdr procs))
-        (eval-exp (car procs) env)
-        (begin (eval-exp (car procs) env)
-               (apply-to-bodies env (cdr procs))))))
+    (cond
+     [(null? procs) (void)]
+     [(null? (cdr procs))
+      (eval-exp (car procs) env)]
+     [else
+      (begin (eval-exp (car procs) env) (apply-to-bodies env (cdr procs)))])))
 
 ;; Apply a procedure to its arguments.
 ;; At this point, we only have primitive procedures.  
@@ -153,6 +164,11 @@
                        else-exp))]
            [while-exp (test body)
                       (while-exp (syntax-expand test) (map syntax-expand body))]
+           [for-exp (init condition update body)
+                    (for-exp (map syntax-expand init)
+                             (syntax-expand condition)
+                             (map syntax-expand update)
+                             (map syntax-expand body))]
            [named-let-exp (id value body)
                           (syntax-expand
                            (letrec-exp (list (1st id))

@@ -67,7 +67,7 @@
 (define parse-exp
   (lambda (datum)
     (cond
-     [(or (number? datum) (vector? datum) (boolean? datum) (string? datum) (char? datum))
+     [(or (number? datum) (vector? datum) (boolean? datum) (string? datum) (char? datum) (null? datum))
       (lit-exp datum)]
      [(pair? datum)
       (if (not (list? datum)) (eopl:error 'parse-exp "expression ~s is not a proper list" datum))
@@ -147,6 +147,11 @@
                     (map parse-exp (caddr result))))]
        [(while)
         (while-exp (parse-exp (2nd datum)) (map parse-exp (cddr datum)))]
+       [(for)
+        (for-exp (map parse-exp (1st (2nd datum)))
+                 (parse-exp (3rd (2nd datum)))
+                 (map parse-exp (cddddr (2nd datum)))
+                 (map parse-exp (cddr datum)))]
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
@@ -196,5 +201,9 @@
                              (map (lambda (n m) (cons (unparse-exp n) (map unparse-exp m))) conds execs)
                              (list (cons 'else (map unparse-exp else-exp))))]
            [while-exp (test body)
-                      (cons 'while (cons (unparse-exp test) (map unparse-exp body)))])))
+                      (cons 'while (cons (unparse-exp test) (map unparse-exp body)))]
+           [for-exp (init condition update body)
+                    (list 'for
+                          (list (unparse-exp init) ': (unparse-exp condition) ': (unparse-exp update))
+                          (unparse-exp body))])))
 
