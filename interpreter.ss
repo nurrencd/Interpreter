@@ -12,14 +12,14 @@
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env env id ; look up its value.
-      	   (lambda (x) x) ; procedure to call if id is in the environment
-           (lambda () (apply-env global-env id
-                                 (lambda (x) x)
-                                 (lambda () (eopl:error
-                                             'apply-env
-                                             "variable not found in environment: ~s"
-                                             id)))))] 
+				(apply-env-ref env id ; look up its value.
+      	   (lambda (x) (deref x)) ; procedure to call if id is in the environment
+           (lambda () (apply-env-ref global-env id
+                                     (lambda (x) (deref x))
+                                     (lambda () (eopl:error
+                                                 'apply-env-ref
+                                                 "variable not found in environment: ~s"
+                                                 id)))))] 
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
@@ -44,7 +44,7 @@
         (let ([new-env (recursively-extended-env-record
                          id vals env)])
           (apply-to-bodies new-env body))]
-        
+
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
       [while-exp (test body)
@@ -60,6 +60,13 @@
                          (apply-to-bodies env body)
                          (apply-to-bodies env update)
                          (loop)))))]
+      [set!-exp (id rand)
+                (apply-env-ref env id
+                               (lambda (x) (set-ref! x (eval-exp rand env)))
+                               (lambda () (eopl:error
+                                           'apply-env-ref
+                                           "Global set! not implemented yet: ~s"
+                                           id)))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -80,7 +87,7 @@
       (begin (eval-exp (car procs) env) (apply-to-bodies env (cdr procs)))])))
 
 ;; Apply a procedure to its arguments.
-;; At this point, we only have primitive procedures.  
+;; At this point, we only have primitive procedures.
 ;; User-defined procedures will be added later.
 
 (define apply-proc
@@ -98,7 +105,7 @@
                                                env)])
                       (apply-to-bodies new-env proc)))]
       [else (error 'apply-proc
-                   "Attempt to apply bad procedure: ~s" 
+                   "Attempt to apply bad procedure: ~s"
                     proc-value)])))
 
 (define syntax-expand
@@ -189,9 +196,9 @@
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
    *prim-proc-names*     ; a value (not an expression) with an identifier.
-     (map prim-proc
-          *prim-proc-names*)
-     (empty-env)))
+   (map prim-proc
+        *prim-proc-names*)
+   (empty-env)))
 
 (define global-env init-env)
 

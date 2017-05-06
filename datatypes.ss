@@ -7,11 +7,11 @@
   (empty-env-record)
   (extended-env-record
    (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
+   (vals (list-of box?))
    (env environment?))
   (recursively-extended-env-record
    (proc-names (list-of symbol?))
-   (bodiess (list-of expression?))
+   (bodiess (list-of expression?)) ;I think we have to box this, but we'll do this later
    (env environment?)))
 
 ;; Parsed expression datatypes
