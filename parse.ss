@@ -152,6 +152,9 @@
                  (parse-exp (3rd (2nd datum)))
                  (map parse-exp (cddddr (2nd datum)))
                  (map parse-exp (cddr datum)))]
+       [(define)
+        (define-exp (2nd datum)
+          (parse-exp (3rd datum)))]
        [else (app-exp (parse-exp (1st datum))
                       (map parse-exp (cdr datum)))])]
      [(symbol? datum) (var-exp datum)]
@@ -205,5 +208,9 @@
            [for-exp (init condition update body)
                     (list 'for
                           (list (unparse-exp init) ': (unparse-exp condition) ': (unparse-exp update))
-                          (unparse-exp body))])))
+                          (unparse-exp body))]
+           [define-exp (id val)
+             (list 'define
+                   id
+                   (unparse-exp val))])))
 

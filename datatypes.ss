@@ -77,7 +77,10 @@
    (init (list-of expression?))
    (condition expression?)
    (update (list-of expression?))
-   (body (list-of expression?))])
+   (body (list-of expression?))]
+  [define-exp
+    (id symbol?)
+    (val expression?)])
 
 ;; datatype for procedures.  At first there is only one
 ;; kind of procedure, but more kinds will be added later.

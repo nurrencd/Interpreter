@@ -19,7 +19,7 @@
                                      (lambda () (eopl:error
                                                  'apply-env-ref
                                                  "variable not found in environment: ~s"
-                                                 id)))))] 
+                                                 id)))))]
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
@@ -63,10 +63,14 @@
       [set!-exp (id rand)
                 (apply-env-ref env id
                                (lambda (x) (set-ref! x (eval-exp rand env)))
-                               (lambda () (eopl:error
-                                           'apply-env-ref
-                                           "Global set! not implemented yet: ~s"
-                                           id)))]
+                               (lambda () (apply-env-ref global-env id
+                                                         (lambda (x) (set-ref! x (eval-exp rand env)))
+                                                         (lambda () (eopl:error
+                                                                     'apply-env-ref
+                                                                     "variable not found in environment: ~s"
+                                                                     id)))))]
+      [define-exp (id val)
+        (set! global-env (extend-env (list id) (list (eval-exp val env)) global-env))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -181,6 +185,10 @@
                            (letrec-exp (list (1st id))
                                        (list (lambda-exp (cdr id) '() body))
                                        (list (app-exp (var-exp (1st id)) value))))]
+           [define-exp (id val)
+             (define-exp
+               id
+               (syntax-expand val))]
       )))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?
@@ -201,6 +209,9 @@
    (empty-env)))
 
 (define global-env init-env)
+
+(define reset-global-env
+  (lambda () (set! global-env init-env)))
 
 ;; Usually an interpreter must define each 
 ;; built-in procedure individually.  We are "cheating" a little bit.
@@ -449,7 +460,7 @@
   (lambda ()
     (display "--> ")
     ;;;notice that we don't save changes to the environment...
-    (let ([answer (top-level-eval (parse-exp (read)))])
+    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
       (if (proc-val? answer)
           (display "<interpreter-procedure>")
           (eopl:pretty-print answer))
