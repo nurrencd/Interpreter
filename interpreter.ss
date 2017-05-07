@@ -143,7 +143,6 @@
                                                   (list (if-exp (var-exp 'res)
                                                                 (var-exp 'res) 
                                                                 (or-exp (cdr rand))))))])]
-                   ;; [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
            [letrec-exp (id val body)
                        (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
            [if-exp (condition true false)
