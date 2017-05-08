@@ -21,12 +21,17 @@
         (cdr n))))
 
 (define only-symbols?
+  (lambda (ls)
+    (cond [(or (symbol? ls) (null? ls)) #t]
+          [(or (and (list? (car ls)) (= (length (car ls)) 2) (eqv? 'ref (caar ls)))
+               (symbol? (car ls))) 
+           (only-symbols? (cdr ls))]
+          [else #f])))
+
+(define make-lambda-ids
   (lambda (n)
-    (if (symbol? (car n))
-        (if (or (null? (cdr n)) (symbol? (cdr n)))
-            #t
-            (only-symbols? (cdr n)))
-        #f)))
+    (cond [(symbol? n) (val-id n)]
+          [else (ref-id (cadr n))])))
 
 (define get-rest
   (lambda (n)
@@ -79,7 +84,7 @@
             (eopl:error 'parse-exp "lambda expression: identifiers must be symbols ~s" datum))
         (cond
          [(list? (2nd datum))
-          (lambda-exp (2nd datum)
+          (lambda-exp (map make-lambda-ids (2nd datum))
                       '()
                       (map parse-exp (cddr datum)))]
          [(symbol? (2nd datum))
@@ -87,7 +92,7 @@
                       (2nd datum)
                       (map parse-exp (cddr datum)))]
          [(pair? (2nd datum))
-          (lambda-exp (get-rest (2nd datum))
+          (lambda-exp (map make-lambda-ids (get-rest (2nd datum)))
                       (get-last (2nd datum))
                       (map parse-exp (cddr datum)))])]
        [(let)

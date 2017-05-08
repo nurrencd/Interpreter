@@ -14,8 +14,13 @@
    (bodiess (list-of expression?)) ;I think we have to box this, but we'll do this later
    (env environment?)))
 
-;; Parsed expression datatypes
+(define-datatype lambda-id lambda-id?
+  [ref-id 
+    (sym symbol?)]
+  [val-id 
+    (sym symbol?)])
 
+;; Parsed expression datatypes
 (define-datatype expression expression?
   [var-exp
    (id symbol?)]
@@ -23,7 +28,7 @@
    (id (lambda (n)
          (ormap (lambda (proc) (proc n)) (list number? boolean? string? char? symbol? list? vector?))))]
   [lambda-exp
-   (id (list-of symbol?))
+   (id (list-of lambda-id?))
    (list-id (lambda (n) (or (null? n) (symbol? n))))
    (body (list-of expression?))]
   [let-exp
@@ -89,7 +94,7 @@
   [prim-proc
    (name symbol?)]
   [closure
-   (syms (list-of symbol?))
+   (syms (list-of lambda-id?))
    (list-id (lambda (x) (or (symbol? x) (null? x))))
    (proc (list-of expression?))
    (env environment?)])

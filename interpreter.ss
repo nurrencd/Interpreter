@@ -5,7 +5,35 @@
     ; later we may add things that are not expressions.
     (eval-exp form (empty-env))))
 
+(define get-id
+  (lambda (n)
+    (cases lambda-id n
+      [ref-id (sym)
+        sym]
+      [val-id (sym)
+        sym])))
+
 ;; eval-exp is the main component of the interpreter
+(define eval-id ; ALWAYS RETURNS A BOX
+  (lambda (n env arg)
+    (cases lambda-id n
+      [ref-id (sym)
+        (cases expression arg
+          [var-exp (var-sym)
+                    (apply-env-ref env 
+                                   var-sym 
+                                   (lambda (x) x)
+                                   (apply-env-ref global-env var-sym
+                                                  (lambda (x) x)
+                                                  (eopl:error 'apply-env-ref
+                                                              "variable not found in environment ~s"
+                                                              sym)))]
+          [else (eopl:error 'eval-id
+                            "expected variable reference, got garbage: ~s"
+                            arg)])]
+      [val-id (sym)
+        (box (eval-exp arg env))]
+      )))
 
 (define eval-exp
   (lambda (exp env)
@@ -27,9 +55,8 @@
                      (let ([cond-val (eval-exp condition env)])
                        (if cond-val (eval-exp true env)))]
       [app-exp (rator rands)
-               (let ([proc-value (eval-exp rator env)]
-                     [args (eval-rands rands env)])
-                 (apply-proc proc-value args))]
+               (let ([proc-value (eval-exp rator env)])
+                 (apply-proc proc-value rands env))]
 ;;     [let-exp (id value body)
 ;;              (let ([new-env (extend-env id
 ;;                                          (map
@@ -70,7 +97,7 @@
                                                                      "variable not found in environment: ~s"
                                                                      id)))))]
       [define-exp (id val)
-        (set! global-env (extend-env (list id) (list (eval-exp val env)) global-env))]
+        (set! global-env (extend-env (list id) (list (box (eval-exp val env))) global-env))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -95,16 +122,19 @@
 ;; User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args)
+  (lambda (proc-value args env) ;added env to evaluate by reference
+    
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args)]
-			; You will add other cases
+      [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n env)) args))]
       [closure (syms list-id proc env)
                 (if (null? list-id)
-                    (let ([new-env (extend-env syms args env)])
+                    (let ([new-env (extend-env (map get-id syms)
+                                               (map (lambda (x y) (eval-id (x env y)))
+                                                    syms args) 
+                                               env)])
                       (apply-to-bodies new-env proc))
                     (let* ([newer-args (new-args args (length syms))]
-                           [new-env (extend-env (append syms (list list-id))
+                           [new-env (extend-env (append (map get-id syms) (list list-id))
                                                newer-args
                                                env)])
                       (apply-to-bodies new-env proc)))]
@@ -204,8 +234,8 @@
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
    *prim-proc-names*     ; a value (not an expression) with an identifier.
-   (map prim-proc
-        *prim-proc-names*)
+   (map box (map prim-proc
+                 *prim-proc-names*))
    (empty-env)))
 
 (define global-env init-env)
