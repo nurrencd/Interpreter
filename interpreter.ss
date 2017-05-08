@@ -479,8 +479,12 @@
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
-        [(map) (apply map (cons (lambda n (apply-proc (1st args) n env)) (cdr args)))]
-        [(apply) (apply-proc (1st args) (cadr args) env)]
+        [(map) (apply map (cons (lambda n (apply-proc (1st args)
+                                                      (map syntax-expand
+                                                           (map parse-exp n)) env))
+                                (cdr args)))]
+        [(apply) (apply-proc (1st args) (map syntax-expand
+                                             (map parse-exp (cadr args))) env)]
         [(member) (apply member args)]
         [(quotient) (apply quotient args)]
         [(list-tail) (apply list-tail args)]
