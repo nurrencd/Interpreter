@@ -23,12 +23,12 @@
                     (apply-env-ref env 
                                    var-sym 
                                    (lambda (x) x)
-                                   (apply-env-ref global-env var-sym
+                                   (lambda () (apply-env-ref global-env var-sym
                                                   (lambda (x) x)
                                                   (lambda ()
                                                   (eopl:error 'eval-id
                                                               "variable not found in environment ~s"
-                                                              var-sym))))]
+                                                              var-sym)))))]
           [else (eopl:error 'eval-id
                             "expected variable reference, got garbage: ~s"
                             arg)])]
@@ -46,7 +46,7 @@
            (lambda () (apply-env-ref global-env id
                                      (lambda (x) (deref x))
                                      (lambda () (eopl:error
-                                                 'apply-env-ref
+                                                 'var-exp
                                                  "variable not found in environment: ~s"
                                                  id)))))]
       [if-exp (condition true false)
