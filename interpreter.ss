@@ -125,7 +125,7 @@
 (define apply-proc
   (lambda (proc-value args orig-env) ;added orig-env to evaluate by reference   
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n orig-env)) args))]
+      [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n orig-env)) args) orig-env)]
       [closure (syms list-id proc env)
                 (if (null? list-id)
                     (let ([new-env (extend-env (map get-id syms)
@@ -250,7 +250,7 @@
 ;; Usually an interpreter must define each 
 ;; built-in procedure individually.  We are "cheating" a little bit.
 (define apply-prim-proc
-  (lambda (prim-proc args)
+  (lambda (prim-proc args env)
     (let ([arg-len (length args)])
       (case prim-proc
         [(+) (apply + args)]
@@ -479,8 +479,8 @@
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
-        [(map) (apply map (cons (lambda n (apply-proc (1st args) n)) (cdr args)))]
-        [(apply) (apply-proc (1st args) (cadr args))]
+        [(map) (apply map (cons (lambda n (apply-proc (1st args) n env)) (cdr args)))]
+        [(apply) (apply-proc (1st args) (cadr args) env)]
         [(member) (apply member args)]
         [(quotient) (apply quotient args)]
         [(list-tail) (apply list-tail args)]
