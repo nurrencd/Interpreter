@@ -152,7 +152,7 @@
            [lambda-exp (id list-id body)
                        (lambda-exp id list-id (map syntax-expand body))]
            [let-exp (id val body)
-             (app-exp (lambda-exp id '() (map syntax-expand body)) (map syntax-expand val))]
+             (app-exp (lambda-exp (map val-id id) '() (map syntax-expand body)) (map syntax-expand val))]
            [let*-exp (id val body)
                      (if (null? (cdr id))
                          (syntax-expand (let-exp (list (car id)) (list (car val)) body))
