@@ -13,7 +13,7 @@
       [val-id (sym)
         sym])))
 
-;; eval-exp is the main component of the interpreter
+
 (define eval-id ; ALWAYS RETURNS A BOX
   (lambda (n env arg)
     (cases lambda-id n
@@ -25,22 +25,23 @@
                                    (lambda (x) x)
                                    (apply-env-ref global-env var-sym
                                                   (lambda (x) x)
-                                                  (eopl:error 'apply-env-ref
+                                                  (lambda ()
+                                                  (eopl:error 'eval-id
                                                               "variable not found in environment ~s"
-                                                              sym)))]
+                                                              var-sym))))]
           [else (eopl:error 'eval-id
                             "expected variable reference, got garbage: ~s"
                             arg)])]
       [val-id (sym)
         (box (eval-exp arg env))]
       )))
-
+;; eval-exp is the main component of the interpreter
 (define eval-exp
   (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env-ref env id ; look up its value.
+        (apply-env-ref env id ; look up its value.
       	   (lambda (x) (deref x)) ; procedure to call if id is in the environment
            (lambda () (apply-env-ref global-env id
                                      (lambda (x) (deref x))
@@ -122,14 +123,13 @@
 ;; User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args env) ;added env to evaluate by reference
-    
+  (lambda (proc-value args env) ;added env to evaluate by reference   
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n env)) args))]
       [closure (syms list-id proc env)
                 (if (null? list-id)
                     (let ([new-env (extend-env (map get-id syms)
-                                               (map (lambda (x y) (eval-id (x env y)))
+                                               (map (lambda (x y) (eval-id x env y))
                                                     syms args) 
                                                env)])
                       (apply-to-bodies new-env proc))
@@ -168,11 +168,7 @@
                     [(null? rand) (lit-exp #f)]
                     [(null? (cdr rand))
                      (syntax-expand (car rand))]
-                    [else (syntax-expand (let-exp (list 'res) 
-                                                  (list (car rand))
-                                                  (list (if-exp (var-exp 'res)
-                                                                (var-exp 'res) 
-                                                                (or-exp (cdr rand))))))])]
+                    [else (syntax-expand (if-exp (car rand) (car rand) (or-exp (cdr rand))))])]
            [letrec-exp (id val body)
                        (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
            [if-exp (condition true false)
