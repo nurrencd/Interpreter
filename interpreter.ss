@@ -70,7 +70,7 @@
 ;;                       body))))]
       [letrec-exp (id vals body)
         (let ([new-env (recursively-extended-env-record
-                         id vals env)])
+                         id (map box vals) env)])
           (apply-to-bodies new-env body))]
 
       [lambda-exp (syms list-id body)
@@ -123,13 +123,13 @@
 ;; User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args env) ;added env to evaluate by reference   
+  (lambda (proc-value args orig-env) ;added orig-env to evaluate by reference   
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n env)) args))]
+      [prim-proc (op) (apply-prim-proc op (map (lambda (n) (eval-exp n orig-env)) args))]
       [closure (syms list-id proc env)
                 (if (null? list-id)
                     (let ([new-env (extend-env (map get-id syms)
-                                               (map (lambda (x y) (eval-id x env y))
+                                               (map (lambda (x y) (eval-id x orig-env y))
                                                     syms args) 
                                                env)])
                       (apply-to-bodies new-env proc))
@@ -217,7 +217,7 @@
            [named-let-exp (id value body)
                           (syntax-expand
                            (letrec-exp (list (1st id))
-                                       (list (lambda-exp (cdr id) '() body))
+                                       (list (lambda-exp (map val-id (cdr id)) '() body))
                                        (list (app-exp (var-exp (1st id)) value))))]
            [define-exp (id val)
              (define-exp

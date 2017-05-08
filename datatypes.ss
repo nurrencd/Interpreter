@@ -11,7 +11,7 @@
    (env environment?))
   (recursively-extended-env-record
    (proc-names (list-of symbol?))
-   (bodiess (list-of expression?)) ;I think we have to box this, but we'll do this later
+   (bodiess (list-of (lambda (n) (expression? (unbox n)))))
    (env environment?)))
 
 (define-datatype lambda-id lambda-id?
