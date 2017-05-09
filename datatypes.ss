@@ -22,6 +22,9 @@
 
 ;; Parsed expression datatypes
 (define-datatype expression expression?
+  [la-var-exp
+    (depth (lambda (x) (or (number? x) (symbol? x))))
+    (position number?)]
   [var-exp
    (id symbol?)]
   [lit-exp
@@ -54,6 +57,10 @@
   [single-if-exp
    (condition expression?)
    (true expression?)]
+  [la-set!-exp
+    (depth (lambda (x) (or (number? x) (symbol? x))))
+    (position number?)
+    (rand expression?)]
   [set!-exp
    (id symbol?)
    (rand expression?)]

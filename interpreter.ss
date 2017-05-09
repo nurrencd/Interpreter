@@ -19,16 +19,15 @@
     (cases lambda-id n
       [ref-id (sym)
         (cases expression arg
-          [var-exp (var-sym)
-                    (apply-env-ref env 
-                                   var-sym 
-                                   (lambda (x) x)
-                                   (lambda () (apply-env-ref global-env var-sym
-                                                  (lambda (x) x)
-                                                  (lambda ()
-                                                  (eopl:error 'eval-id
-                                                              "variable not found in environment ~s"
-                                                              var-sym)))))]
+          [la-var-exp (depth pos)
+                    (apply-env-ref-global env 
+                                          depth
+                                          pos
+                                         (lambda (x) x)
+                                         (lambda ()
+                                           (eopl:error 'eval-id
+                                                       "variable not found in environment ~s"
+                                                       var-sym)))]
           [else (eopl:error 'eval-id
                             "expected variable reference, got garbage: ~s"
                             arg)])]
@@ -40,15 +39,14 @@
   (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
-      [var-exp (id)
-        (apply-env-ref env id ; look up its value.
+      [la-var-exp (depth pos)
+        (apply-env-ref-global
+            env depth pos ; look up its value.
       	   (lambda (x) (deref x)) ; procedure to call if id is in the environment
-           (lambda () (apply-env-ref global-env id
-                                     (lambda (x) (deref x))
-                                     (lambda () (eopl:error
-                                                 'var-exp
-                                                 "variable not found in environment: ~s"
-                                                 id)))))]
+           (lambda () (eopl:error
+                                  'var-exp
+                                  "variable not found in environment: ~s"
+                                  depth)))]
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
@@ -88,15 +86,15 @@
                          (apply-to-bodies env body)
                          (apply-to-bodies env update)
                          (loop)))))]
-      [set!-exp (id rand)
-                (apply-env-ref env id
-                               (lambda (x) (set-ref! x (eval-exp rand env)))
-                               (lambda () (apply-env-ref global-env id
-                                                         (lambda (x) (set-ref! x (eval-exp rand env)))
-                                                         (lambda () (eopl:error
+      [la-set!-exp (depth pos rand)
+                (apply-env-ref-global env
+                               depth
+                               pos
+                              (lambda (x) (set-ref! x (eval-exp rand env)))
+                              (lambda () (eopl:error
                                                                      'apply-env-ref
                                                                      "variable not found in environment: ~s"
-                                                                     id)))))]
+                                                                     depth)))] ;depth will hold symbol if not bound
       [define-exp (id val)
         (set! global-env (extend-env (list id) (list (box (eval-exp val env))) global-env))]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
@@ -143,62 +141,70 @@
                     proc-value)])))
 
 (define syntax-expand
-  (lambda (exp)
+  (lambda (exp bind-ls)
     (cases expression exp
+           [la-var-exp (depth pos)
+             exp]
            [var-exp (id)
-                    exp]
+                    (let ([result (get-depth-pos bind-ls id)])
+                      (la-var-exp (car result) (cadr result)))]
            [lit-exp (id)
             exp]
            [lambda-exp (id list-id body)
-                       (lambda-exp id list-id (map syntax-expand body))]
+                       (lambda-exp id list-id (map (lambda (x) (syntax-expand x
+                                                                             (cons (append (map get-id id) (list list-id)) bind-ls))) body))]
            [let-exp (id val body)
-             (app-exp (lambda-exp (map val-id id) '() (map syntax-expand body)) (map syntax-expand val))]
+             (syntax-expand (app-exp (lambda-exp (map val-id id) '() body) val) bind-ls)]
            [let*-exp (id val body)
                      (if (null? (cdr id))
-                         (syntax-expand (let-exp (list (car id)) (list (car val)) body))
+                         (syntax-expand (let-exp (list (car id)) (list (car val)) body) bind-ls)
                          (syntax-expand (let-exp (list (car id))
                                                  (list (car val))
-                                                 (list (let*-exp (cdr id) (cdr val) body)))))]
+                                                 (list (let*-exp (cdr id) (cdr val) body))) bind-ls))]
            [and-exp (rand)
                     (if (null? (cdr rand))
-                        (syntax-expand (car rand))
-                        (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f))))]
+                        (syntax-expand (car rand) bind-ls)
+                        (syntax-expand (if-exp (car rand) (and-exp (cdr rand)) (lit-exp #f)) bind-ls))]
            [or-exp (rand)
                    (cond
                     [(null? rand) (lit-exp #f)]
                     [(null? (cdr rand))
-                     (syntax-expand (car rand))]
+                     (syntax-expand (car rand) bind-ls)]
                     [else (syntax-expand (let-exp (list 'res) 
                                                   (list (car rand))
                                                   (list (if-exp (var-exp 'res)
                                                                 (var-exp 'res) 
-                                                                (or-exp (cdr rand))))))])]
+                                                                (or-exp (cdr rand))))) bind-ls)])]
            [letrec-exp (id val body)
-                       (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
+                     (let ([new-bind-ls (cons id bind-ls)])
+                       (letrec-exp id (map (lambda (x) (syntax-expand x new-bind-ls)) val) (map (lambda (x) (syntax-expand x new-bind-ls)) body)))]
            [if-exp (condition true false)
-                   (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
+                   (if-exp (syntax-expand condition bind-ls) (syntax-expand true bind-ls) (syntax-expand false bind-ls))]
            [single-if-exp (condition true)
-                          (single-if-exp (syntax-expand condition) (syntax-expand true))]
+                          (single-if-exp (syntax-expand condition bind-ls) (syntax-expand true bind-ls))]
+           [la-set!-exp (depth pos rand)
+             exp]
            [set!-exp (id rand)
-                     (set!-exp id (syntax-expand rand))]
+             (let ([result (get-depth-pos bind-ls id)])
+                     (la-set!-exp (car result) (cadr result) (syntax-expand rand bind-ls)))]
            [app-exp (rator rand)
-                    (app-exp (syntax-expand rator) (map syntax-expand rand))]
+                    (app-exp (syntax-expand rator bind-ls) (map (lambda (x) (syntax-expand x bind-ls)) rand))]
            [begin-exp (execs)
-                      (app-exp (lambda-exp '() '() (map syntax-expand execs)) '())]
+                      (syntax-expand (app-exp (lambda-exp '() '() execs) '()) bind-ls)]
            [cond-exp (conds execs else-exp)
                      (cond
-                      [(null? conds) (syntax-expand (begin-exp else-exp))]
+                      [(null? conds) (syntax-expand (begin-exp else-exp) bind-ls)]
                       [(and (null? (cdr conds)) (null? else-exp))
                        (syntax-expand (single-if-exp (car conds)
-                                                     (begin-exp (car execs))))]
+                                                     (begin-exp (car execs))) bind-ls)]
                       [(null? (cdr conds))
                        (syntax-expand (if-exp (car conds)
                                               (begin-exp (car execs))
-                                              (begin-exp else-exp)))]
+                                              (begin-exp else-exp)) bind-ls)]
                       [else
                        (syntax-expand (if-exp (car conds)
                                               (begin-exp (car execs))
-                                              (cond-exp (cdr conds) (cdr execs) else-exp)))])]
+                                              (cond-exp (cdr conds) (cdr execs) else-exp)) bind-ls)])]
            [case-exp (val cases execs else-exp)
                      (syntax-expand
                       (cond-exp
@@ -206,23 +212,23 @@
                                                  (list val (lit-exp (map unparse-exp n)))))
                             cases)
                        execs
-                       else-exp))]
+                       else-exp) bind-ls)]
            [while-exp (test body)
-                      (while-exp (syntax-expand test) (map syntax-expand body))]
+                      (while-exp (syntax-expand test bind-ls) (map (lambda (x) (syntax-expand x bind-ls)) body))]
            [for-exp (init condition update body)
-                    (for-exp (map syntax-expand init)
-                             (syntax-expand condition)
-                             (map syntax-expand update)
-                             (map syntax-expand body))]
+                    (for-exp (map (lambda (x) (syntax-expand x bind-ls)) init)
+                             (syntax-expand condition bind-ls)
+                             (map (lambda (x) (syntax-expand x bind-ls)) update)
+                             (map (lambda (x) (syntax-expand x bind-ls)) body))]
            [named-let-exp (id value body)
                           (syntax-expand
                            (letrec-exp (list (1st id))
                                        (list (lambda-exp (map val-id (cdr id)) '() body))
-                                       (list (app-exp (var-exp (1st id)) value))))]
+                                       (list (app-exp (var-exp (1st id)) value))) bind-ls)]
            [define-exp (id val)
              (define-exp
                id
-               (syntax-expand val))]
+               (syntax-expand val bind-ls))]
       )))
 
 (define *prim-proc-names* '(+ - * add1 sub1 cons = / zero?
@@ -480,10 +486,10 @@
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(map) (apply map (cons (lambda n (apply-proc (1st args)
-                                                      (map syntax-expand
+                                                      (map (lambda (x) (syntax-expand x '()))
                                                            (map parse-exp n)) env))
                                 (cdr args)))]
-        [(apply) (apply-proc (1st args) (map syntax-expand
+        [(apply) (apply-proc (1st args) (map (lambda (x) (syntax-expand x '()))
                                              (map parse-exp (cadr args))) env)]
         [(member) (apply member args)]
         [(quotient) (apply quotient args)]
@@ -498,7 +504,7 @@
   (lambda ()
     (display "--> ")
     ;;;notice that we don't save changes to the environment...
-    (let ([answer (top-level-eval (syntax-expand (parse-exp (read))))])
+    (let ([answer (top-level-eval (syntax-expand (parse-exp (read)) '()))])
       (if (proc-val? answer)
           (display "<interpreter-procedure>")
           (eopl:pretty-print answer))
@@ -506,7 +512,7 @@
       (rep))))  ;tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x) '()))))
 
 (define new-args
   (lambda (args n)

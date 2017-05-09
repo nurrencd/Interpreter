@@ -27,6 +27,13 @@
 		 (+ 1 list-index-r)
 		 #f))))))
 
+(define apply-env-ref-global
+  (lambda (env depth pos succeed fail)
+    (cond [(symbol? depth)
+           (apply-env-ref global-env depth succeed fail)]
+          [else
+            (apply-env-ref-la env depth pos succeed fail)])))
+
 (define apply-env-ref
   (lambda (env sym succeed fail) ; succeed and fail are "callback procedures,
     (cases environment env       ;  succeed is appluied if sym is found, otherwise
@@ -45,3 +52,21 @@
                        (succeed (box (closure id list-id bodies env)))]
                      [else (void)])
                    (apply-env-ref old-env sym succeed fail)))])))
+
+(define apply-env-ref-la
+  (lambda (env depth pos succeed fail)
+    (cases environment env
+      [empty-env-record ()
+        (fail)]
+      [extended-env-record (syms vals env)
+        (if (= depth 0)
+            (succeed (list-ref vals pos))
+            (apply-env-ref-la env (- depth 1) pos succeed fail))]
+      [recursively-extended-env-record (proc-names bodiess old-env)
+        (if (zero? depth)
+            (cases expression (deref (list-ref bodiess pos))
+              [lambda-exp (id list-id bodies)
+                (succeed (box (closure id list-id bodies env)))]
+              [else (void)])
+            (apply-env-ref-la old-env (- depth 1) pos succeed fail))]
+      )))
