@@ -10,7 +10,8 @@
     (load "parse.ss")
     (load "datatypes.ss")
     (load "env.ss")
-    (load "interpreter.ss")))
+    (load "interpreter.ss")
+    (load "continuation.ss")))
 
 (load-all)
 

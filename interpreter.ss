@@ -11,6 +11,7 @@
   (lambda (exp env)
     (cases expression exp
       [lit-exp (datum) datum]
+
       [var-exp (id)
 				(apply-env-ref env id ; look up its value.
       	   (lambda (x) (deref x)) ; procedure to call if id is in the environment
@@ -20,26 +21,20 @@
                                                  'apply-env-ref
                                                  "variable not found in environment: ~s"
                                                  id)))))]
+
       [if-exp (condition true false)
               (let ([cond-val (eval-exp condition env)])
                 (if cond-val (eval-exp true env) (eval-exp false env)))]
+
       [single-if-exp (condition true)
                      (let ([cond-val (eval-exp condition env)])
                        (if cond-val (eval-exp true env)))]
+
       [app-exp (rator rands)
                (let ([proc-value (eval-exp rator env)]
                      [args (eval-rands rands env)])
                  (apply-proc proc-value args))]
-;;     [let-exp (id value body)
-;;              (let ([new-env (extend-env id
-;;                                          (map
-;;                                           (lambda (m) (eval-exp m env))
-;;                                           value)
-;;                                          env)])
-;;                (car (last-pair
-;;                      (map
-;;                       (lambda (n) (eval-exp n new-env))
-;;                       body))))]
+
       [letrec-exp (id vals body)
         (let ([new-env (recursively-extended-env-record
                          id vals env)])
@@ -47,10 +42,12 @@
 
       [lambda-exp (syms list-id body)
                (closure syms list-id body env)]
+
       [while-exp (test body)
         (if (eval-exp test env)
             (begin (apply-to-bodies env body)
                    (eval-exp exp env)))]
+
       [for-exp (init condition update body)
                (begin
                  (apply-to-bodies env init)
@@ -60,6 +57,7 @@
                          (apply-to-bodies env body)
                          (apply-to-bodies env update)
                          (loop)))))]
+
       [set!-exp (id rand)
                 (apply-env-ref env id
                                (lambda (x) (set-ref! x (eval-exp rand env)))
@@ -69,8 +67,10 @@
                                                                      'apply-env-ref
                                                                      "variable not found in environment: ~s"
                                                                      id)))))]
+
       [define-exp (id val)
         (set! global-env (extend-env (list id) (list (eval-exp val env)) global-env))]
+
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ;; evaluate the list of operands, putting results into a list
@@ -479,3 +479,15 @@
     (if (zero? n)
         (cons args '())
         (cons (car args) (new-args (cdr args) (sub1 n))))))
+
+(define map-cps
+  (lambda (proc ls k)
+    (if (null? ls)
+        (apply-k k '())
+        (map-cps proc
+                 (cdr ls)
+                 (map-k proc (car ls) k)))))
+
+(define --cps
+  (lambda (val k)
+    (apply-k k (- val))))

@@ -93,3 +93,20 @@
    (list-id (lambda (x) (or (symbol? x) (null? x))))
    (proc (list-of expression?))
    (env environment?)])
+
+(define-datatype continuation continuation?
+  [if-k  (then-exp expression?)
+         (else-exp expression?)
+         (env environment?)
+         (k continuation?)]
+  [rator-k (rands (list-of expression?))
+           (env environment?)
+           (k continuation?)]
+  [rands-k (proc-value scheme-value?)
+           (k continuation?)]
+  [map-k (proc-val procedure?)
+         (car-ls scheme-value?)
+         (k continuation?)]
+  [map-proc-k (cdr-ls list?)
+              (k continuation?)]
+  [value-k])
