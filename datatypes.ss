@@ -107,7 +107,7 @@
            (k continuation?)]
   [rands-k (proc-value scheme-value?)
            (k continuation?)]
-  [set!-k (id symbol?)
+  [set!-k (ref box?)
           (k continuation?)]
   ;[letrec-k (id (list-of symbol?))
   ;          (value (list-of expression?))
@@ -120,4 +120,7 @@
          (k continuation?)]
   [map-proc-k (cdr-ls list?)
               (k continuation?)]
+  [apply-to-bodies-k (cdr-procs list?)
+                     (env environment?)
+                     (k continuation?)]
   [value-k])

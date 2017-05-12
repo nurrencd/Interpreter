@@ -22,5 +22,7 @@
                        (apply-k k (cons val cdr-ls))]
            [set!-k (x k)
                   (apply-k k (set-ref! x val))]
+           [apply-to-bodies-k (cdr-procs env k)
+                              (apply-to-bodies env cdr-procs k)]
            [value-k ()
                     val])))

@@ -46,15 +46,15 @@
       [letrec-exp (id vals body)
         (let ([new-env (recursively-extended-env-record
                          id vals env)])
-          (apply-to-bodies new-env body))]
+          (apply-to-bodies new-env body k))]
 
       [lambda-exp (syms list-id body)
                (apply-k k (closure syms list-id body env))]
 
       [while-exp (test body)
         (if (eval-exp test env)
-            (begin (apply-to-bodies env body)
-                   (eval-exp exp env)))]
+            (begin (apply-to-bodies env body k)
+                   (eval-exp exp env k)))]
 
 ;      [for-exp (init condition update body)
 ;               (begin
@@ -87,38 +87,38 @@
 ;; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands env)
-    (map (lambda (n) (eval-exp n env)) rands)))
+  (lambda (rands env k)
+    (map-cps (lambda (n new-k) (eval-exp n env new-k)) rands k)))
 
 ;; Executes the items in procs with the environment env. Meant for use in the body of a lambda
 
 (define apply-to-bodies
-  (lambda (env procs)
+  (lambda (env procs k)
     (cond
      [(null? procs) (void)]
      [(null? (cdr procs))
-      (eval-exp (car procs) env)]
+      (eval-exp (car procs) env k)]
      [else
-      (begin (eval-exp (car procs) env) (apply-to-bodies env (cdr procs)))])))
+      (eval-exp (car procs) env (apply-to-bodies-k (cdr procs) env k))])))
 
 ;; Apply a procedure to its arguments.
 ;; At this point, we only have primitive procedures.
 ;; User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args)
+  (lambda (proc-value args k)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
 			; You will add other cases
       [closure (syms list-id proc env)
                 (if (null? list-id)
                     (let ([new-env (extend-env syms args env)])
-                      (apply-to-bodies new-env proc))
+                      (apply-to-bodies new-env proc k))
                     (let* ([newer-args (new-args args (length syms))]
                            [new-env (extend-env (append syms (list list-id))
                                                newer-args
                                                env)])
-                      (apply-to-bodies new-env proc)))]
+                      (apply-to-bodies new-env proc k)))]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s"
                     proc-value)])))
