@@ -108,14 +108,13 @@
   [rands-k (proc-value scheme-value?)
            (k continuation?)]
   [set!-k (id symbol?)
-          (val expression?)
           (k continuation?)]
-  [letrec-k (id (list-of symbol?))
-            (value (list-of expression?))
-            (body (list-of expression?))
-            (k continuation?)]
-  [while-k (test expression?)
-           (body (list-of expression?))]
+  ;[letrec-k (id (list-of symbol?))
+  ;          (value (list-of expression?))
+  ;          (body (list-of expression?))
+  ;          (k continuation?)]
+  ;[while-k (test expression?)
+  ;         (body (list-of expression?))]
   [map-k (proc-val procedure?)
          (car-ls scheme-value?)
          (k continuation?)]

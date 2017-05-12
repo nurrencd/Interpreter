@@ -3,7 +3,7 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form (empty-env))))
+    (eval-exp form (empty-env) (value-k))))
 
 ;; eval-exp is the main component of the interpreter
 
@@ -68,12 +68,12 @@
 
       [set!-exp (id rand)
                 (apply-env-ref env id
-                               (lambda (x) (set-ref! x (eval-exp rand env k)))
+                               (lambda (x) (eval-exp rand env (set!-k x k)))
                                (lambda () (apply-env-ref global-env id
-                                                         (lambda (x) (set-ref! x (eval-exp
-                                                                                  rand
-                                                                                  env
-                                                                                  (set-k x k))))
+                                                         (lambda (x) (eval-exp
+                                                                      rand
+                                                                      env
+                                                                      (set!-k x k)))
                                                          (lambda () (eopl:error
                                                                      'apply-env-ref
                                                                      "variable not found in environment: ~s"
