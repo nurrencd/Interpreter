@@ -80,7 +80,7 @@
                                                                      id)))))]
 
       [define-exp (id val)
-        (set! global-env (extend-env (list id) (list (eval-exp val env)) global-env))]
+        (eval-exp val env (define-k id k))]
 
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
@@ -108,7 +108,7 @@
 (define apply-proc
   (lambda (proc-value args k)
     (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args)]
+      [prim-proc (op) (apply-prim-proc op args k)]
 			; You will add other cases
       [closure (syms list-id proc env)
                 (if (null? list-id)
@@ -231,242 +231,242 @@
 ;; Usually an interpreter must define each 
 ;; built-in procedure individually.  We are "cheating" a little bit.
 (define apply-prim-proc
-  (lambda (prim-proc args)
+  (lambda (prim-proc args k)
     (let ([arg-len (length args)])
       (case prim-proc
-        [(+) (apply + args)]
-        [(-) (apply - args)]
-        [(*) (apply * args)]
-        [(add1) (+ (1st args) 1)]
-        [(sub1) (- (1st args) 1)]
+        [(+) (apply-k k (apply + args))]
+        [(-) (apply-k k (apply - args))]
+        [(*) (apply-k k (apply * args))]
+        [(add1) (apply-k k (+ (1st args) 1))]
+        [(sub1) (apply-k k (- (1st args) 1))]
         [(cons) (if (= arg-len 2)
-                    (cons (1st args) (2nd args))
+                    (apply-k k (cons (1st args) (2nd args)))
                     (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc)
                     )]
-        [(=) (apply = args)]
-        [(/) (apply / args)]
-        [(<) (apply < args)]
-        [(>) (apply > args)]
-        [(<=) (apply <= args)]
-        [(>=) (apply >= args)]
+        [(=) (apply-k k (apply = args))]
+        [(/) (apply-k k (apply / args))]
+        [(<) (apply-k k (apply < args))]
+        [(>) (apply-k k (apply > args))]
+        [(<=) (apply-k k (apply <= args))]
+        [(>=) (apply-k k (apply >= args))]
         [(zero?) (if (= 1 arg-len)
-                     (zero? (1st args))
+                     (apply-k (zero? (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc)
                      )]
         [(not) (if (= 1 arg-len)
-                    (not (1st args))
+                    (apply-k k (not (1st args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
         [(car) (if (= 1 arg-len )
-                   (car (1st args))
+                   (apply-k k (car (1st args)))
                    (error 'apply-prim-proc
                           "Cannot car empty list")
                    )]
         [(cdr) (if (= 1 arg-len)
-                     (cdr (1st args))
+                     (apply-k k (cdr (1st args)))
                      (error 'apply-prim-proc
                             "cannot cdr empty list")
                    )]
-        [(list) args]
+        [(list) (apply-k k args)]
         [(null?) (if (= arg-len 1)
-                     (null? (1st args))
+                     (apply-k k (null? (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc)
                      )]
         [(assq) (if (= arg-len 2)
-                    (assq (1st args) (2nd args))
+                    (apply-k k (assq (1st args) (2nd args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                     )]
         [(equal?) (if (= arg-len 2)
-                   (equal? (1st args) (2nd args))
+                   (apply-k k (equal? (1st args) (2nd args)))
                    (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                    )]
         [(eq?) (if (= arg-len 2)
-                   (eq? (1st args) (2nd args))
+                   (apply-k k (eq? (1st args) (2nd args)))
                    (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                    )]
         [(equal?) (if (= arg-len 2)
-                      (equal? (1st args) (2nd args))
+                      (apply-k k (equal? (1st args) (2nd args)))
                       (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                       )]
         [(atom?) (if (= arg-len 1)
-                     (atom? (1st args))
+                     (apply-k k (atom? (1st args)))
                      (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                      )]
         [(length) (if (= arg-len 1)
-                      (length (1st args))
+                      (apply-k k (length (1st args)))
                       (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                       )]
         [(list->vector) (if (= arg-len 1)
-                            (list->vector (1st args))
+                            (apply-k k (list->vector (1st args)))
                             (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                             )]
         [(list?) (if (= arg-len 1)
-                     (list? (1st args))
+                     (apply-k k (list? (1st args)))
                      (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                      )]
         [(pair?) (if (= arg-len 1)
-                     (pair? (1st args))
+                     (apply-k k (pair? (1st args)))
                      (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                      )]
         [(procedure?) (if (= arg-len 1)
-                          (proc-val? (1st args))
+                          (apply-k k (proc-val? (1st args)))
                           (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                           )]
         [(vector->list) (if (= arg-len 1)
-                            (vector->list (1st args))
+                            (apply-k k (vector->list (1st args)))
                             (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                             )]
-        [(vector) (apply vector args)]
-        [(make-vector) (cond [(= arg-len 1)
+        [(vector) (apply-k k (apply vector args))]
+        [(make-vector) (apply-k k (cond [(= arg-len 1)
                               (make-vector (1st args))]
                              [(= arg-len 2)
                               (make-vector (1st args) (2nd args))]
                              [else (error 'apply-prim-proc
                                            "Incorrect argument count in call ~s"
                                            prim-proc)]
-                        )]
+                        ))]
         [(vector-ref) (if (= arg-len 2)
-                          (vector-ref (1st args) (2nd args))
+                          (apply-k k (vector-ref (1st args) (2nd args)))
                           (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
                           )]
         [(vector?) (if (= arg-len 1)
-                       (vector? (1st args))
+                       (apply-k k (vector? (1st args)))
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(number?) (if (= arg-len 1)
-                        (number? (1st args))
+                        (apply-k k (number? (1st args)))
                         (error 'apply-prim-proc
                                "Incorrect argument count in call ~s"
                                prim-proc))]
         [(symbol?) (if (= arg-len 1)
-                       (symbol? (1st args))
+                       (apply-k k (symbol? (1st args)))
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(set-car!) (if (= arg-len 2)
-                        (apply set-car! args)
+                        (apply-k k (apply set-car! args))
                         (error 'apply-prim-proc
                                "Incorrect argument count in call ~s"
                                prim-proc))]
         [(set-cdr!) (if (= arg-len 2)
-                        (apply set-cdr! args)
+                        (apply-k k (apply set-cdr! args))
                         (error 'apply-prim-proc
                                "Incorrect argument count in call ~s"
                                prim-proc))]
         [(vector-set!) (if (= arg-len 3)
-                           (vector-set! (1st args) (2nd args) (3rd args))
+                           (apply-k k (vector-set! (1st args) (2nd args) (3rd args)))
                            (error 'apply-prim-proc
                                   "Incorrect argument count in call ~s"
                                   prim-proc))]
         [(display) (if (= arg-len 1)
-                       (display (1st args))
+                       (apply-k k (display (1st args)))
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(newline) (if (null? args)
-                       (newline)
+                       (apply-k k (newline))
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(caar) (if (= arg-len 1)
-                       (caar (1st args))
+                       (apply-k k (caar (1st args)))
                        (error 'apply-prim-proc
                               "Incorrect argument count in call ~s"
                               prim-proc))]
         [(cadr) (if (= arg-len 1)
-                    (cadr (1st args))
+                    (apply-k k (cadr (1st args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
         [(cdar) (if (= arg-len 1)
-                    (cdar (1st args))
+                    (apply-k k (cdar (1st args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
         [(cddr) (if (= arg-len 1)
-                    (cddr (1st args))
+                    (apply-k k (cddr (1st args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
         [(caaar) (if (= arg-len 1)
-                    (caaar (1st args))
+                    (apply-k k (caaar (1st args)))
                     (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc))]
         [(caadr) (if (= arg-len 1)
-                     (caadr (1st args))
+                     (apply-k k (caadr (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(cadar) (if (= arg-len 1)
-                     (cadar (1st args))
+                     (apply-k k (cadar (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(caddr) (if (= arg-len 1)
-                     (caddr (1st args))
+                     (apply-k k (caddr (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(cdaar) (if (= arg-len 1)
-                     (cdaar (1st args))
+                     (apply-k k (cdaar (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(cdadr) (if (= arg-len 1)
-                     (cdadr (1st args))
+                     (apply-k k (cdadr (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(cddar) (if (= arg-len 1)
-                     (cddar (1st args))
+                     (apply-k k (cddar (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
         [(cdddr) (if (= arg-len 1)
-                     (cdddr (1st args))
+                     (apply-k k (cdddr (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
-        [(map) (apply map (cons (lambda n (apply-proc (1st args) n)) (cdr args)))]
-        [(apply) (apply-proc (1st args) (cadr args))]
-        [(member) (apply member args)]
-        [(quotient) (apply quotient args)]
-        [(list-tail) (apply list-tail args)]
-        [(eqv?) (apply eqv? args)]
-        [(append) (apply append args)]
+        [(map) (apply map (cons (lambda n (apply-proc (1st args) n k)) (cdr args)))] ;; Probably need to convert to map-cps
+        [(apply) (apply-proc (1st args) (cadr args) k)]
+        [(member) (apply-k k (apply member args))]
+        [(quotient) (apply-k k (apply quotient args))]
+        [(list-tail) (apply-k k (apply list-tail args))]
+        [(eqv?) (apply-k k (apply eqv? args))]
+        [(append) (apply-k k (apply append args))]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))

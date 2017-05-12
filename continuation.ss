@@ -24,5 +24,7 @@
                   (apply-k k (set-ref! x val))]
            [apply-to-bodies-k (cdr-procs env k)
                               (apply-to-bodies env cdr-procs k)]
+           [define-k (id k)
+             (apply-k k (set! global-env (extend-env (list id) (list val) global-env)))]
            [value-k ()
                     val])))

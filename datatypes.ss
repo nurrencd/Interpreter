@@ -123,4 +123,6 @@
   [apply-to-bodies-k (cdr-procs list?)
                      (env environment?)
                      (k continuation?)]
+  [define-k (id symbol?)
+    (k continuation?)]
   [value-k])
