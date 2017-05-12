@@ -9,9 +9,13 @@
   (lambda (syms vals env)
     (extended-env-record syms (map box vals) env)))
 
-(define deref unbox)
+(define deref
+  (lambda (inbox k)
+    (apply-k k (unbox inbox))))
 
-(define set-ref! set-box!)
+(define set-ref!
+  (lambda (inbox val k)
+    (apply-k k (set-box! inbox val))))
 
 (define list-find-position
   (lambda (sym los)
@@ -28,7 +32,7 @@
 		 #f))))))
 
 (define apply-env-ref ;;inserting comment for shiggles
-  (lambda (env sym succeed fail) ; succeed and fail are "callback procedures,
+  (lambda (env sym succeed-k fail) ; succeed and fail are "callback procedures,
     (cases environment env       ;  succeed is appluied if sym is found, otherwise
            [empty-env-record ()       ;  fail is applied.
                              (fail)]

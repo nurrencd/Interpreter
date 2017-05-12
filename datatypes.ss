@@ -115,8 +115,7 @@
             (body (list-of expression?))
             (k continuation?)]
   [while-k (test expression?)
-           (body (list-of expression?))
-           
+           (body (list-of expression?))]
   [map-k (proc-val procedure?)
          (car-ls scheme-value?)
          (k continuation?)]

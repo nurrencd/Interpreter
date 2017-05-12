@@ -20,5 +20,7 @@
                             (map-proc-k val k))]
            [map-proc-k (cdr-ls k)
                        (apply-k k (cons val cdr-ls))]
+           [set-k (x k)
+                  (apply-k k set-ref! x val)]
            [value-k ()
                     val])))

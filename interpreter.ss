@@ -68,9 +68,12 @@
 
       [set!-exp (id rand)
                 (apply-env-ref env id
-                               (lambda (x) (set-ref! x (eval-exp rand env)))
+                               (lambda (x) (set-ref! x (eval-exp rand env k)))
                                (lambda () (apply-env-ref global-env id
-                                                         (lambda (x) (set-ref! x (eval-exp rand env)))
+                                                         (lambda (x) (set-ref! x (eval-exp
+                                                                                  rand
+                                                                                  env
+                                                                                  (set-k x k))))
                                                          (lambda () (eopl:error
                                                                      'apply-env-ref
                                                                      "variable not found in environment: ~s"
