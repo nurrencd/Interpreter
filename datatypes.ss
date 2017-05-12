@@ -99,11 +99,26 @@
          (else-exp expression?)
          (env environment?)
          (k continuation?)]
+  [single-if-k (then-exp expression?)
+               (env environment?)
+               (k continuation?)]
   [rator-k (rands (list-of expression?))
            (env environment?)
            (k continuation?)]
   [rands-k (proc-value scheme-value?)
            (k continuation?)]
+  [lambda-k (closure proc-val?)
+            (k continuation?)]
+  [set!-k (id symbol?)
+          (val expression?)
+          (k continuation?)]
+  [letrec-k (id (list-of symbol?))
+            (value (list-of expression?))
+            (body (list-of expression?))
+            (k continuation?)]
+  [while-k (test expression?)
+           (body (list-of expression?))
+           
   [map-k (proc-val procedure?)
          (car-ls scheme-value?)
          (k continuation?)]
