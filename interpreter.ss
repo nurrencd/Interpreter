@@ -8,32 +8,40 @@
 ;; eval-exp is the main component of the interpreter
 
 (define eval-exp
-  (lambda (exp env)
+  (lambda (exp env k)
     (cases expression exp
-      [lit-exp (datum) datum]
+      [lit-exp (datum)
+        (apply-k k datum)]
 
       [var-exp (id)
 				(apply-env-ref env id ; look up its value.
-      	   (lambda (x) (deref x)) ; procedure to call if id is in the environment
+      	   (lambda (x) (apply-k k (deref x))) ; procedure to call if id is in the environment
            (lambda () (apply-env-ref global-env id
-                                     (lambda (x) (deref x))
+                                     (lambda (x) (apply-k k (deref x)))
                                      (lambda () (eopl:error
                                                  'apply-env-ref
                                                  "variable not found in environment: ~s"
                                                  id)))))]
 
       [if-exp (condition true false)
-              (let ([cond-val (eval-exp condition env)])
-                (if cond-val (eval-exp true env) (eval-exp false env)))]
+        (eval-exp condition
+                  env
+                 (if-k true false env k))]
+        ;      (let ([cond-val (eval-exp condition env)])
+         ;       (if cond-val (eval-exp true env) (eval-exp false env)))]
 
       [single-if-exp (condition true)
-                     (let ([cond-val (eval-exp condition env)])
-                       (if cond-val (eval-exp true env)))]
+                     (eval-exp condition
+                               env
+                               (single-if-k true env k))]
 
       [app-exp (rator rands)
-               (let ([proc-value (eval-exp rator env)]
-                     [args (eval-rands rands env)])
-                 (apply-proc proc-value args))]
+               (eval-exp rator
+                         env
+                         (rator-k rands env k))]
+;               (let ([proc-value (eval-exp rator env)]
+ ;                    [args (eval-rands rands env)])
+  ;               (apply-proc proc-value args))]
 
       [letrec-exp (id vals body)
         (let ([new-env (recursively-extended-env-record
@@ -41,22 +49,22 @@
           (apply-to-bodies new-env body))]
 
       [lambda-exp (syms list-id body)
-               (closure syms list-id body env)]
+               (apply-k k (closure syms list-id body env))]
 
       [while-exp (test body)
         (if (eval-exp test env)
             (begin (apply-to-bodies env body)
                    (eval-exp exp env)))]
 
-      [for-exp (init condition update body)
-               (begin
-                 (apply-to-bodies env init)
-                 (let loop ()
-                   (if (eval-exp condition env)
-                       (begin
-                         (apply-to-bodies env body)
-                         (apply-to-bodies env update)
-                         (loop)))))]
+;      [for-exp (init condition update body)
+;               (begin
+;                 (apply-to-bodies env init)
+;                 (let loop ()
+;                   (if (eval-exp condition env)
+;                       (begin
+;                         (apply-to-bodies env body)
+;                         (apply-to-bodies env update)
+;                         (loop)))))]
 
       [set!-exp (id rand)
                 (apply-env-ref env id

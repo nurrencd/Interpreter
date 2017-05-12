@@ -5,6 +5,9 @@
                    (if val
                        (eval-exp then-exp env k)
                        (eval-exp else-exp env k))]
+           [single-if-k (then-exp env k)
+                        (if val
+                            (eval-exp then-exp env k))]
            [rator-k (rands env k)
                     (eval-rands rands
                                 env

@@ -107,8 +107,6 @@
            (k continuation?)]
   [rands-k (proc-value scheme-value?)
            (k continuation?)]
-  [lambda-k (closure proc-val?)
-            (k continuation?)]
   [set!-k (id symbol?)
           (val expression?)
           (k continuation?)]
