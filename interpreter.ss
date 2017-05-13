@@ -43,18 +43,18 @@
  ;                    [args (eval-rands rands env)])
   ;               (apply-proc proc-value args))]
 
-      [letrec-exp (id vals body)
-        (let ([new-env (recursively-extended-env-record
-                         id vals env)])
-          (apply-to-bodies new-env body k))]
+;      [letrec-exp (id vals body)
+;        (let ([new-env (recursively-extended-env-record
+;                         id vals env)])
+;          (apply-to-bodies new-env body k))]
 
       [lambda-exp (syms list-id body)
                (apply-k k (closure syms list-id body env))]
 
-      [while-exp (test body)
-        (if (eval-exp test env)
-            (begin (apply-to-bodies env body k)
-                   (eval-exp exp env k)))]
+;      [while-exp (test body)
+;        (if (eval-exp test env)
+;            (begin (apply-to-bodies env body k)
+;                   (eval-exp exp env k)))]
 
 ;      [for-exp (init condition update body)
 ;               (begin
@@ -155,7 +155,17 @@
                                                                 (var-exp 'res) 
                                                                 (or-exp (cdr rand))))))])]
            [letrec-exp (id val body)
-                       (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
+                       (let ([temp-vars (map (lambda (n) (gensym)) (make-list (length id) #f))])
+                         (syntax-expand (let-exp id
+                                                 (make-list (length id) (lit-exp #f))
+                                                 (list (let-exp temp-vars
+                                                          val
+                                                          (append (map (lambda (n m)
+                                                                         (set!-exp n (var-exp m)))
+                                                                       id
+                                                                       temp-vars)
+                                                                  body))))))]
+;                       (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
            [if-exp (condition true false)
                    (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
            [single-if-exp (condition true)
