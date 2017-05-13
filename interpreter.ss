@@ -107,21 +107,25 @@
 
 (define apply-proc
   (lambda (proc-value args k)
-    (cases proc-val proc-value
-      [prim-proc (op) (apply-prim-proc op args k)]
-			; You will add other cases
-      [closure (syms list-id proc env)
-                (if (null? list-id)
-                    (let ([new-env (extend-env syms args env)])
-                      (apply-to-bodies new-env proc k))
-                    (let* ([newer-args (new-args args (length syms))]
-                           [new-env (extend-env (append syms (list list-id))
-                                               newer-args
-                                               env)])
-                      (apply-to-bodies new-env proc k)))]
-      [else (error 'apply-proc
-                   "Attempt to apply bad procedure: ~s"
-                    proc-value)])))
+    (cond [(proc-val? proc-value)
+           (cases proc-val proc-value
+                  [prim-proc (op) (apply-prim-proc op args k)]
+                                        ; You will add other cases
+                  [closure (syms list-id proc env)
+                           (if (null? list-id)
+                               (let ([new-env (extend-env syms args env)])
+                                 (apply-to-bodies new-env proc k))
+                               (let* ([newer-args (new-args args (length syms))]
+                                      [new-env (extend-env (append syms (list list-id))
+                                                           newer-args
+                                                           env)])
+                                 (apply-to-bodies new-env proc k)))]
+                  [else
+                   (error 'apply-proc
+                          "Attempt to apply bad procedure: ~s"
+                          proc-value)])]
+          [(continuation? proc-value)
+           (apply-k proc-value (car args))])))
 
 (define syntax-expand
   (lambda (exp)
@@ -224,7 +228,7 @@
                               caar cadr cdar cddr
                               caaar caadr cadar caddr cdaar cdadr cddar cdddr
                               map apply member quotient
-                              list-tail eqv? append))
+                              list-tail eqv? append call/cc exit-list))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -275,7 +279,8 @@
         [(car) (if (= 1 arg-len )
                    (apply-k k (car (1st args)))
                    (error 'apply-prim-proc
-                          "Cannot car empty list")
+                          "Cannot car empty list ~s"
+                          args)
                    )]
         [(cdr) (if (= 1 arg-len)
                      (apply-k k (cdr (1st args)))
@@ -344,7 +349,7 @@
                            prim-proc)
                      )]
         [(procedure?) (if (= arg-len 1)
-                          (apply-k k (proc-val? (1st args)))
+                          (apply-k k (or (proc-val? (1st args)) (continuation? (1st args))))
                           (error 'apply-prim-proc
                            "Incorrect argument count in call ~s"
                            prim-proc)
@@ -470,13 +475,15 @@
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
-        [(map) (apply map-cps (list (lambda (n new-k) (apply-proc (1st args) n new-k)) (cadr args) k))]
+        [(map) (map-cps (lambda (n new-k) (apply-proc (1st args) (list n) new-k)) (2nd args) k)]
         [(apply) (apply-proc (1st args) (cadr args) k)]
         [(member) (apply-k k (apply member args))]
         [(quotient) (apply-k k (apply quotient args))]
         [(list-tail) (apply-k k (apply list-tail args))]
         [(eqv?) (apply-k k (apply eqv? args))]
         [(append) (apply-k k (apply append args))]
+        [(call/cc) (apply-proc (1st args) (list k) k)]
+        [(exit-list) args]
         [else (error 'apply-prim-proc 
                      "Bad primitive procedure name: ~s" 
                      prim-proc)]))))
@@ -507,7 +514,7 @@
         (apply-k k '())
         (map-cps proc
                  (cdr ls)
-                 (map-k proc (car ls) k)))))
+                 (map-k proc (1st ls) k)))))
 
 (define --cps
   (lambda (val k)
