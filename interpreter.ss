@@ -470,7 +470,7 @@
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
                             prim-proc))]
-        [(map) (apply map (cons (lambda n (apply-proc (1st args) n k)) (cdr args)))] ;; Probably need to convert to map-cps
+        [(map) (apply map-cps (list (lambda (n new-k) (apply-proc (1st args) n new-k)) (cadr args) k))]
         [(apply) (apply-proc (1st args) (cadr args) k)]
         [(member) (apply-k k (apply member args))]
         [(quotient) (apply-k k (apply quotient args))]
