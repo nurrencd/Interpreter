@@ -169,7 +169,6 @@
                                                                        id
                                                                        temp-vars)
                                                                   body))))))]
-;                       (letrec-exp id (map syntax-expand val) (map syntax-expand body))]
            [if-exp (condition true false)
                    (if-exp (syntax-expand condition) (syntax-expand true) (syntax-expand false))]
            [single-if-exp (condition true)
@@ -257,8 +256,7 @@
                     (apply-k k (cons (1st args) (2nd args)))
                     (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
-                            prim-proc)
-                    )]
+                            prim-proc))]
         [(=) (apply-k k (apply = args))]
         [(/) (apply-k k (apply / args))]
         [(<) (apply-k k (apply < args))]
@@ -266,11 +264,10 @@
         [(<=) (apply-k k (apply <= args))]
         [(>=) (apply-k k (apply >= args))]
         [(zero?) (if (= 1 arg-len)
-                     (apply-k (zero? (1st args)))
+                     (apply-k k (zero? (1st args)))
                      (error 'apply-prim-proc
                             "Incorrect argument count in call ~s"
-                            prim-proc)
-                     )]
+                            prim-proc))]
         [(not) (if (= 1 arg-len)
                     (apply-k k (not (1st args)))
                     (error 'apply-prim-proc
@@ -280,8 +277,7 @@
                    (apply-k k (car (1st args)))
                    (error 'apply-prim-proc
                           "Cannot car empty list ~s"
-                          args)
-                   )]
+                          args))]
         [(cdr) (if (= 1 arg-len)
                      (apply-k k (cdr (1st args)))
                      (error 'apply-prim-proc
